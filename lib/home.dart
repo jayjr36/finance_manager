@@ -1,5 +1,5 @@
 import 'package:finance_manager/dailyinput.dart';
-import 'package:finance_manager/dailytracker.dart';
+import 'package:finance_manager/dailyanalysis.dart';
 import 'package:finance_manager/expense.dart';
 import 'package:finance_manager/incomes.dart';
 import 'package:flutter/material.dart';

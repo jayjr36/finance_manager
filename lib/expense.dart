@@ -1,7 +1,6 @@
-// ignore_for_file: no_leading_underscores_for_local_identifiers, use_build_context_synchronously
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:finance_manager/spendingsbydate.dart'; // Import the screen to navigate to
 
 class ExpenseScreen extends StatefulWidget {
   const ExpenseScreen({super.key});
@@ -14,6 +13,9 @@ class ExpenseScreenState extends State<ExpenseScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<Map<String, dynamic>> dailyExpenses = [];
   List<Map<String, dynamic>> weeklyExpenses = [];
+  double totalDailyExpenses = 0.0;
+  double totalWeeklyExpenses = 0.0;
+  double totalDailySpendings = 0.0;
 
   @override
   void initState() {
@@ -22,18 +24,34 @@ class ExpenseScreenState extends State<ExpenseScreen> {
   }
 
   Future<void> _fetchExpenses() async {
-    // Fetch daily expenses
-    QuerySnapshot dailySnapshot = await _firestore.collection('preset_daily_expenses').get();
-    List<Map<String, dynamic>> dailyData = dailySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+    try {
+      // Fetch daily expenses
+      QuerySnapshot dailySnapshot = await _firestore.collection('daily_expenses').get();
+      List<Map<String, dynamic>> dailyData = dailySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
 
-    // Fetch weekly expenses
-    QuerySnapshot weeklySnapshot = await _firestore.collection('preset_weekly_expenses').get();
-    List<Map<String, dynamic>> weeklyData = weeklySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      // Fetch weekly expenses
+      QuerySnapshot weeklySnapshot = await _firestore.collection('weekly_expenses').get();
+      List<Map<String, dynamic>> weeklyData = weeklySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
 
-    setState(() {
-      dailyExpenses = dailyData;
-      weeklyExpenses = weeklyData;
-    });
+      // Calculate total daily expenses
+      double dailyTotal = dailySnapshot.docs.fold(0, (sum, doc) => sum + (doc.data() as Map<String, dynamic>)['amount']);
+
+      // Calculate total weekly expenses
+      double weeklyTotal = weeklySnapshot.docs.fold(0, (sum, doc) => sum + (doc.data() as Map<String, dynamic>)['amount']);
+
+      setState(() {
+        dailyExpenses = dailyData;
+        weeklyExpenses = weeklyData;
+        totalDailyExpenses = dailyTotal;
+        totalWeeklyExpenses = weeklyTotal;
+      });
+
+      // Debug prints to verify data
+      print('Daily Expenses: $dailyExpenses');
+      print('Weekly Expenses: $weeklyExpenses');
+    } catch (e) {
+      print('Error fetching expenses: $e');
+    }
   }
 
   Future<void> _addExpense(String collection) async {
@@ -60,11 +78,19 @@ class ExpenseScreenState extends State<ExpenseScreen> {
         actions: [
           TextButton(
             onPressed: () async {
-              String name = _nameController.text;
-              double amount = double.parse(_amountController.text);
-              await _firestore.collection(collection).add({'name': name, 'amount': amount, 'timestamp': Timestamp.now()});
-              Navigator.of(context).pop();
-              _fetchExpenses(); 
+              try {
+                String name = _nameController.text;
+                double amount = double.parse(_amountController.text);
+                await _firestore.collection(collection).add({
+                  'name': name,
+                  'amount': amount,
+                  'timestamp': Timestamp.now()
+                });
+                Navigator.of(context).pop();
+                _fetchExpenses();
+              } catch (e) {
+                print('Error adding expense: $e');
+              }
             },
             child: const Text('Add'),
           ),
@@ -91,9 +117,9 @@ class ExpenseScreenState extends State<ExpenseScreen> {
             title: const Text('Daily Expenses'),
             children: [
               ...dailyExpenses.map((expense) => ListTile(
-                    title: Text('${expense['name']} - \$${expense['amount']}'),
-                    subtitle: Text((expense['timestamp'] as Timestamp).toDate().toString()),
-                  )),
+                title: Text('${expense['name']} - \$${expense['amount']}'),
+                subtitle: Text((expense['timestamp'] as Timestamp).toDate().toString()),
+              )),
               TextButton(
                 onPressed: () => _addExpense('daily_expenses'),
                 child: const Text('Add Daily Expense'),
@@ -104,15 +130,29 @@ class ExpenseScreenState extends State<ExpenseScreen> {
             title: const Text('Weekly Expenses'),
             children: [
               ...weeklyExpenses.map((expense) => ListTile(
-                    title: Text('${expense['name']} - \$${expense['amount']}'),
-                    subtitle: Text((expense['timestamp'] as Timestamp).toDate().toString()),
-                  )),
+                title: Text('${expense['name']} - \$${expense['amount']}'),
+                subtitle: Text((expense['timestamp'] as Timestamp).toDate().toString()),
+              )),
               TextButton(
                 onPressed: () => _addExpense('weekly_expenses'),
                 child: const Text('Add Weekly Expense'),
               ),
             ],
           ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DailySpendingByDateScreen()),
+              );
+            },
+            child: const Text('Spendings By Date'),
+          ),
+          SizedBox(height: 20), // Add some space for better separation
+          // Display total values for daily expenses, weekly expenses, and daily spendings
+          Text('Total Daily Expenses: \$${totalDailyExpenses.toStringAsFixed(2)}'),
+          Text('Total Weekly Expenses: \$${totalWeeklyExpenses.toStringAsFixed(2)}'),
+          Text('Total Daily Spendings: \$${totalDailySpendings.toStringAsFixed(2)}'),
         ],
       ),
     );
