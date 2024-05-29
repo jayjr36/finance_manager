@@ -106,27 +106,6 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(hintText: 'Enter expense name'),
-                  ),
-                  TextField(
-                    controller: _amountController,
-                    decoration: const InputDecoration(hintText: 'Enter amount'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16.0),
-                  ElevatedButton(
-                    onPressed: _addDailySpending,
-                    child: const Text('Add Daily Spending'),
-                  ),
-                ],
-              ),
-            ),
             const Divider(),
             analysisData.isEmpty
                 ? const Center(child: CircularProgressIndicator())
@@ -152,18 +131,18 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
 
                         return DataRow(cells: [
                           DataCell(Text(data['name'])),
-                          DataCell(Text('\$${data['amount'].toStringAsFixed(2)}')),
+                          DataCell(Text('${data['amount'].toStringAsFixed(2)}')),
                           DataCell(Text(data['status'], style: TextStyle(color: statusColor))),
-                          DataCell(Text('\$${data['difference'].toStringAsFixed(2)}')),
+                          DataCell(Text('${data['difference'].toStringAsFixed(2)}')),
                           DataCell(Text((data['timestamp'] as Timestamp).toDate().toString())),
                         ]);
                       }).toList(),
                     ),
                   ),
             const SizedBox(height: 20),
-            Text('Total Amount Overspent: \$${totalOverspent.toStringAsFixed(2)}', style: TextStyle(color: Colors.red)),
-            Text('Total Amount Saved: \$${totalSaved.toStringAsFixed(2)}', style: TextStyle(color: Colors.green)),
-            Text('Total Predefined Budget: \$${totalPredefinedBudget.toStringAsFixed(2)}', style: TextStyle(color: Colors.blue)),
+            Text('Total Amount Overspent: ${totalOverspent.toStringAsFixed(2)}', style: TextStyle(color: Colors.red)),
+            Text('Total Amount Saved: ${totalSaved.toStringAsFixed(2)}', style: TextStyle(color: Colors.green)),
+            Text('Total Predefined Daily Budget: ${totalPredefinedBudget.toStringAsFixed(2)}', style: TextStyle(color: Colors.blue)),
           ],
         ),
       ),

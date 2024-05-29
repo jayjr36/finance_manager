@@ -1,3 +1,4 @@
+import 'package:finance_manager/goals.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finance_manager/spendingsbydate.dart'; // Import the screen to navigate to
@@ -25,18 +26,12 @@ class ExpenseScreenState extends State<ExpenseScreen> {
 
   Future<void> _fetchExpenses() async {
     try {
-      // Fetch daily expenses
       QuerySnapshot dailySnapshot = await _firestore.collection('daily_expenses').get();
       List<Map<String, dynamic>> dailyData = dailySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
 
-      // Fetch weekly expenses
       QuerySnapshot weeklySnapshot = await _firestore.collection('weekly_expenses').get();
       List<Map<String, dynamic>> weeklyData = weeklySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
-
-      // Calculate total daily expenses
       double dailyTotal = dailySnapshot.docs.fold(0, (sum, doc) => sum + (doc.data() as Map<String, dynamic>)['amount']);
-
-      // Calculate total weekly expenses
       double weeklyTotal = weeklySnapshot.docs.fold(0, (sum, doc) => sum + (doc.data() as Map<String, dynamic>)['amount']);
 
       setState(() {
@@ -109,15 +104,16 @@ class ExpenseScreenState extends State<ExpenseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Expense Tracker'),
+        backgroundColor: Colors.yellow,
+        title: const Text('Expense Tracker', style: TextStyle(color: Colors.white),),
       ),
       body: ListView(
         children: [
           ExpansionTile(
-            title: const Text('Daily Expenses'),
+            title: const Text('Daily Expenses',style: TextStyle(backgroundColor: Colors.yellow),),
             children: [
               ...dailyExpenses.map((expense) => ListTile(
-                title: Text('${expense['name']} - \$${expense['amount']}'),
+                title: Text('${expense['name']} - ${expense['amount']}'),
                 subtitle: Text((expense['timestamp'] as Timestamp).toDate().toString()),
               )),
               TextButton(
@@ -130,7 +126,7 @@ class ExpenseScreenState extends State<ExpenseScreen> {
             title: const Text('Weekly Expenses'),
             children: [
               ...weeklyExpenses.map((expense) => ListTile(
-                title: Text('${expense['name']} - \$${expense['amount']}'),
+                title: Text('${expense['name']} - ${expense['amount']}'),
                 subtitle: Text((expense['timestamp'] as Timestamp).toDate().toString()),
               )),
               TextButton(
@@ -148,11 +144,21 @@ class ExpenseScreenState extends State<ExpenseScreen> {
             },
             child: const Text('Spendings By Date'),
           ),
+
+           ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GoalsScreen()),
+              );
+            },
+            child: const Text('Goals'),
+          ),
           SizedBox(height: 20), // Add some space for better separation
           // Display total values for daily expenses, weekly expenses, and daily spendings
-          Text('Total Daily Expenses: \$${totalDailyExpenses.toStringAsFixed(2)}'),
-          Text('Total Weekly Expenses: \$${totalWeeklyExpenses.toStringAsFixed(2)}'),
-          Text('Total Daily Spendings: \$${totalDailySpendings.toStringAsFixed(2)}'),
+          Text('Total Daily Expenses: ${totalDailyExpenses.toStringAsFixed(2)}'),
+          Text('Total Weekly Expenses: ${totalWeeklyExpenses.toStringAsFixed(2)}'),
+          Text('Total Daily Spendings: ${totalDailySpendings.toStringAsFixed(2)}'),
         ],
       ),
     );

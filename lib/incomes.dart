@@ -128,7 +128,8 @@ class IncomeScreenState extends State<IncomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Income Tracker'),
+        backgroundColor: Colors.yellow,
+        title: const Text('Income Tracker', style: TextStyle(color: Colors.white),),
       ),
       body: ListView(
         children: [

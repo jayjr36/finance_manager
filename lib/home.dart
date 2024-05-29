@@ -30,11 +30,10 @@ class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Expense Tracker'),
-      ),
+     
       body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.yellow,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.account_balance_wallet),
@@ -54,6 +53,8 @@ class HomePageState extends State<HomePage> {
           ),
         ],
         currentIndex: _selectedIndex,
+        
+        unselectedItemColor: Colors.black,
         selectedItemColor: Colors.yellow[800],
         onTap: _onItemTapped,
       ),
