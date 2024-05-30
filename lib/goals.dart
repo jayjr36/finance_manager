@@ -1,6 +1,7 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
 
 class Goal {
   String id;
@@ -38,7 +39,6 @@ class Goal {
   }
 }
 
-
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
 
@@ -58,6 +58,7 @@ class GoalsScreenState extends State<GoalsScreen> {
     _fetchGoals();
     _fetchDailySpendings(DateTime.now());
     _fetchIncomes();
+    _distributeMoney();
   }
 
   Future<void> _fetchGoals() async {
@@ -68,16 +69,20 @@ class GoalsScreenState extends State<GoalsScreen> {
   }
 
   Future<void> _fetchDailySpendings(DateTime date) async {
-    Timestamp startOfDay = Timestamp.fromDate(DateTime(date.year, date.month, date.day, 0, 0, 0));
-    Timestamp endOfDay = Timestamp.fromDate(DateTime(date.year, date.month, date.day, 23, 59, 59));
+    Timestamp startOfDay =
+        Timestamp.fromDate(DateTime(date.year, date.month, date.day, 0, 0, 0));
+    Timestamp endOfDay = Timestamp.fromDate(
+        DateTime(date.year, date.month, date.day, 23, 59, 59));
 
-    QuerySnapshot snapshot = await _firestore.collection('daily_spending')
-      .where('timestamp', isGreaterThanOrEqualTo: startOfDay)
-      .where('timestamp', isLessThanOrEqualTo: endOfDay)
-      .get();
-
+    QuerySnapshot snapshot = await _firestore
+        .collection('daily_spending')
+        .where('timestamp', isGreaterThanOrEqualTo: startOfDay)
+        .where('timestamp', isLessThanOrEqualTo: endOfDay)
+        .get();
     setState(() {
-      dailySpendings = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      dailySpendings = snapshot.docs
+          .map((doc) => doc.data() as Map<String, dynamic>)
+          .toList();
     });
   }
 
@@ -85,7 +90,7 @@ class GoalsScreenState extends State<GoalsScreen> {
     QuerySnapshot snapshot = await _firestore.collection('incomes').get();
     List<Map<String, dynamic>> data = snapshot.docs.map((doc) {
       Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
-      docData['id'] = doc.id; // Add the document ID to the data
+      docData['id'] = doc.id;
       return docData;
     }).toList();
 
@@ -96,20 +101,28 @@ class GoalsScreenState extends State<GoalsScreen> {
 
   void _distributeMoney() {
     double totalIncome = incomes.fold(0, (sum, item) => sum + item['amount']);
-    double totalSpending = dailySpendings.fold(0, (sum, item) => sum + item['amount']);
+    double totalSpending =
+        dailySpendings.fold(0, (sum, item) => sum + item['amount']);
     double availableMoney = totalIncome - totalSpending;
 
     for (var goal in _goals) {
       double allocation = availableMoney * (goal.percentage / 100);
-      double updatedAmount = goal.requiredAmount > allocation ? allocation : goal.requiredAmount;
-      _firestore.collection('goals').doc(goal.id).update({'allocatedAmount': updatedAmount});
+      double updatedAmount =
+          goal.requiredAmount > allocation ? allocation : goal.requiredAmount;
+      _firestore
+          .collection('goals')
+          .doc(goal.id)
+          .update({'allocatedAmount': updatedAmount});
     }
   }
 
   Future<void> _showGoalDialog({Goal? goal}) async {
-    final TextEditingController nameController = TextEditingController(text: goal?.name ?? '');
-    final TextEditingController requiredAmountController = TextEditingController(text: goal?.requiredAmount.toString() ?? '');
-    final TextEditingController percentageController = TextEditingController(text: goal?.percentage.toString() ?? '');
+    final TextEditingController nameController =
+        TextEditingController(text: goal?.name ?? '');
+    final TextEditingController requiredAmountController =
+        TextEditingController(text: goal?.requiredAmount.toString() ?? '');
+    final TextEditingController percentageController =
+        TextEditingController(text: goal?.percentage.toString() ?? '');
 
     await showDialog<void>(
       context: context,
@@ -153,7 +166,8 @@ class GoalsScreenState extends State<GoalsScreen> {
                 }
 
                 final name = nameController.text;
-                final requiredAmount = double.parse(requiredAmountController.text);
+                final requiredAmount =
+                    double.parse(requiredAmountController.text);
                 final percentage = double.parse(percentageController.text);
 
                 if (goal == null) {
@@ -174,7 +188,10 @@ class GoalsScreenState extends State<GoalsScreen> {
                     percentage: percentage,
                     allocatedAmount: goal.allocatedAmount,
                   );
-                  await _firestore.collection('goals').doc(goal.id).update(updatedGoal.toMap());
+                  await _firestore
+                      .collection('goals')
+                      .doc(goal.id)
+                      .update(updatedGoal.toMap());
                 }
 
                 _fetchGoals();
@@ -200,6 +217,7 @@ class GoalsScreenState extends State<GoalsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.yellow,
         title: const Text('Manage Goals'),
       ),
       body: ListView.builder(
@@ -209,7 +227,7 @@ class GoalsScreenState extends State<GoalsScreen> {
           return ListTile(
             title: Text(goal.name),
             subtitle: Text(
-                'Required: ${goal.requiredAmount}, Allocated: ${goal.allocatedAmount}, Percentage: ${goal.percentage}%'),
+                'Required: ${goal.requiredAmount}, \nAllocated: ${goal.allocatedAmount}, \nPercentage: ${goal.percentage}%'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

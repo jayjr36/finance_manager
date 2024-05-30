@@ -2,6 +2,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class IncomeScreen extends StatefulWidget {
   const IncomeScreen({super.key});
@@ -13,6 +14,7 @@ class IncomeScreen extends StatefulWidget {
 class IncomeScreenState extends State<IncomeScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<Map<String, dynamic>> incomes = [];
+  double totalIncomes = 0.0;
 
   @override
   void initState() {
@@ -21,15 +23,18 @@ class IncomeScreenState extends State<IncomeScreen> {
   }
 
   Future<void> _fetchIncomes() async {
-    QuerySnapshot snapshot = await _firestore.collection('incomes').get();
-    List<Map<String, dynamic>> data = snapshot.docs.map((doc) {
+    QuerySnapshot incomeSnapshot = await _firestore.collection('incomes').get();
+    List<Map<String, dynamic>> data = incomeSnapshot.docs.map((doc) {
       Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
-      docData['id'] = doc.id; // Add the document ID to the data
+      docData['id'] = doc.id;
       return docData;
     }).toList();
+    double totalIncome = incomeSnapshot.docs.fold(
+        0, (sum, doc) => sum + (doc.data() as Map<String, dynamic>)['amount']);
 
     setState(() {
       incomes = data;
+      totalIncomes = totalIncome;
     });
   }
 
@@ -59,9 +64,13 @@ class IncomeScreenState extends State<IncomeScreen> {
             onPressed: () async {
               String name = _nameController.text;
               double amount = double.parse(_amountController.text);
-              await _firestore.collection('incomes').add({'name': name, 'amount': amount, 'timestamp': Timestamp.now()});
+              await _firestore.collection('incomes').add({
+                'name': name,
+                'amount': amount,
+                'timestamp': Timestamp.now()
+              });
               Navigator.of(context).pop();
-              _fetchIncomes(); // Refresh the list
+              _fetchIncomes(); 
             },
             child: const Text('Add'),
           ),
@@ -76,9 +85,12 @@ class IncomeScreenState extends State<IncomeScreen> {
     );
   }
 
-  Future<void> _editIncome(String id, String currentName, double currentAmount) async {
-    TextEditingController _nameController = TextEditingController(text: currentName);
-    TextEditingController _amountController = TextEditingController(text: currentAmount.toString());
+  Future<void> _editIncome(
+      String id, String currentName, double currentAmount) async {
+    TextEditingController _nameController =
+        TextEditingController(text: currentName);
+    TextEditingController _amountController =
+        TextEditingController(text: currentAmount.toString());
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -102,7 +114,11 @@ class IncomeScreenState extends State<IncomeScreen> {
             onPressed: () async {
               String name = _nameController.text;
               double amount = double.parse(_amountController.text);
-              await _firestore.collection('incomes').doc(id).update({'name': name, 'amount': amount, 'timestamp': Timestamp.now()});
+              await _firestore.collection('incomes').doc(id).update({
+                'name': name,
+                'amount': amount,
+                'timestamp': Timestamp.now()
+              });
               Navigator.of(context).pop();
               _fetchIncomes(); // Refresh the list
             },
@@ -129,7 +145,10 @@ class IncomeScreenState extends State<IncomeScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.yellow,
-        title: const Text('Income Tracker', style: TextStyle(color: Colors.white),),
+        title: const Text(
+          'Income Tracker',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: ListView(
         children: [
@@ -137,14 +156,19 @@ class IncomeScreenState extends State<IncomeScreen> {
             title: const Text('Incomes'),
             children: [
               ...incomes.map((income) => ListTile(
-                    title: Text('${income['name']} - \$${income['amount']}'),
-                    subtitle: Text((income['timestamp'] as Timestamp).toDate().toString()),
+                    title: Text('${income['name']} - ${income['amount']}'),
+                     subtitle: Text(
+                        DateFormat('dd MMMM yyyy').format(
+                          (income['timestamp'] as Timestamp).toDate(),
+                        ),
+                      ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit),
-                          onPressed: () => _editIncome(income['id'], income['name'], income['amount']),
+                          onPressed: () => _editIncome(
+                              income['id'], income['name'], income['amount']),
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete),

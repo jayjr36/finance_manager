@@ -1,7 +1,8 @@
 import 'package:finance_manager/goals.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:finance_manager/spendingsbydate.dart'; // Import the screen to navigate to
+import 'package:finance_manager/spendingsbydate.dart';
+import 'package:intl/intl.dart'; // Import the screen to navigate to
 
 class ExpenseScreen extends StatefulWidget {
   const ExpenseScreen({super.key});
@@ -50,8 +51,8 @@ class ExpenseScreenState extends State<ExpenseScreen> {
   }
 
   Future<void> _addExpense(String collection) async {
-    TextEditingController _nameController = TextEditingController();
-    TextEditingController _amountController = TextEditingController();
+    final nameController = TextEditingController();
+    final amountController = TextEditingController();
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -60,11 +61,11 @@ class ExpenseScreenState extends State<ExpenseScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: _nameController,
+              controller: nameController,
               decoration: const InputDecoration(hintText: 'Enter expense name'),
             ),
             TextField(
-              controller: _amountController,
+              controller: amountController,
               decoration: const InputDecoration(hintText: 'Enter amount'),
               keyboardType: TextInputType.number,
             ),
@@ -74,8 +75,8 @@ class ExpenseScreenState extends State<ExpenseScreen> {
           TextButton(
             onPressed: () async {
               try {
-                String name = _nameController.text;
-                double amount = double.parse(_amountController.text);
+                String name = nameController.text;
+                double amount = double.parse(amountController.text);
                 await _firestore.collection(collection).add({
                   'name': name,
                   'amount': amount,
@@ -110,12 +111,14 @@ class ExpenseScreenState extends State<ExpenseScreen> {
       body: ListView(
         children: [
           ExpansionTile(
-            title: const Text('Daily Expenses',style: TextStyle(backgroundColor: Colors.yellow),),
+            title: const Text('Daily Expenses',),
             children: [
               ...dailyExpenses.map((expense) => ListTile(
                 title: Text('${expense['name']} - ${expense['amount']}'),
-                subtitle: Text((expense['timestamp'] as Timestamp).toDate().toString()),
-              )),
+                subtitle: Text(
+                   DateFormat('dd MMMM yyyy').format(
+                          (expense['timestamp'] as Timestamp).toDate()),
+              ))),
               TextButton(
                 onPressed: () => _addExpense('daily_expenses'),
                 child: const Text('Add Daily Expense'),
@@ -154,11 +157,10 @@ class ExpenseScreenState extends State<ExpenseScreen> {
             },
             child: const Text('Goals'),
           ),
-          SizedBox(height: 20), // Add some space for better separation
-          // Display total values for daily expenses, weekly expenses, and daily spendings
-          Text('Total Daily Expenses: ${totalDailyExpenses.toStringAsFixed(2)}'),
-          Text('Total Weekly Expenses: ${totalWeeklyExpenses.toStringAsFixed(2)}'),
-          Text('Total Daily Spendings: ${totalDailySpendings.toStringAsFixed(2)}'),
+          const SizedBox(height: 20), 
+          Center(child: Text('Total Daily Expenses: ${totalDailyExpenses.toStringAsFixed(0)}')),
+          Center(child: Text('Total Weekly Expenses: ${totalWeeklyExpenses.toStringAsFixed(0)}')),
+          Center(child: Text('Total Budget: ${(totalDailyExpenses+totalWeeklyExpenses).toStringAsFixed(0)}')),
         ],
       ),
     );

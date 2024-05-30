@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class DailyTrackerScreen extends StatefulWidget {
   const DailyTrackerScreen({super.key});
@@ -134,15 +135,17 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
                           DataCell(Text('${data['amount'].toStringAsFixed(2)}')),
                           DataCell(Text(data['status'], style: TextStyle(color: statusColor))),
                           DataCell(Text('${data['difference'].toStringAsFixed(2)}')),
-                          DataCell(Text((data['timestamp'] as Timestamp).toDate().toString())),
+                          DataCell(Text(
+                             DateFormat('dd MMMM yyyy').format(
+                          ((data['timestamp'] as Timestamp).toDate())),))
                         ]);
                       }).toList(),
                     ),
                   ),
             const SizedBox(height: 20),
-            Text('Total Amount Overspent: ${totalOverspent.toStringAsFixed(2)}', style: TextStyle(color: Colors.red)),
-            Text('Total Amount Saved: ${totalSaved.toStringAsFixed(2)}', style: TextStyle(color: Colors.green)),
-            Text('Total Predefined Daily Budget: ${totalPredefinedBudget.toStringAsFixed(2)}', style: TextStyle(color: Colors.blue)),
+            Text('Total Amount Overspent: ${totalOverspent.toStringAsFixed(0)}', style: const TextStyle(color: Colors.red)),
+            Text('Total Amount Saved: ${totalSaved.toStringAsFixed(0)}', style: const TextStyle(color: Colors.green)),
+            Text('Total Predefined Daily Budget: ${totalPredefinedBudget.toStringAsFixed(0)}', style: const TextStyle(color: Colors.blue)),
           ],
         ),
       ),

@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -10,8 +12,8 @@ class DailyExpenseScreen extends StatefulWidget {
 
 class DailyExpenseScreenState extends State<DailyExpenseScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  TextEditingController _nameController = TextEditingController();
-  TextEditingController _amountController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _amountController = TextEditingController();
 
   Future<void> _addSpending() async {
     await showDialog(
@@ -36,7 +38,7 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
           TextButton(
             onPressed: () async {
               String name = _nameController.text.trim();
-              double amount = double.parse(_amountController.text);
+              double amount = double.parse(_amountController.text.trim());
               await _firestore.collection('daily_spendings').add({'name': name, 'amount': amount, 'timestamp': Timestamp.now()});
               Navigator.of(context).pop();
               _analyzeSpending(name, amount);
@@ -81,6 +83,13 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Expense Analysis: $status')));
     } else {
+      await _firestore.collection('expense_analysis').add({
+        'name': name,
+        'amount': amount,
+        'status': 'out of budget',
+        'difference': 0,
+        'timestamp': Timestamp.now(),
+      });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No predefined budget found for $name')));
     }
   }
