@@ -1,3 +1,5 @@
+import 'package:finance_manager/budgetscreen.dart';
+import 'package:finance_manager/dailyinput.dart';
 import 'package:finance_manager/goals.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -152,10 +154,19 @@ class ExpenseScreenState extends State<ExpenseScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const GoalsScreen()),
+                MaterialPageRoute(builder: (context) => const DailyExpenseScreen()),
               );
             },
-            child: const Text('Goals'),
+            child: const Text('Daily records'),
+          ),
+           ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const BudgetScreen()),
+              );
+            },
+            child: const Text('Budget'),
           ),
           const SizedBox(height: 20), 
           Center(child: Text('Total Daily Expenses: ${totalDailyExpenses.toStringAsFixed(0)}')),

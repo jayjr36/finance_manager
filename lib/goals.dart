@@ -1,7 +1,12 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:finance_manager/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 
 class Goal {
   String id;
@@ -69,15 +74,16 @@ class GoalsScreenState extends State<GoalsScreen> {
   }
 
   Future<void> _fetchDailySpendings(DateTime date) async {
-    Timestamp startOfDay =
-        Timestamp.fromDate(DateTime(date.year, date.month, date.day, 0, 0, 0));
-    Timestamp endOfDay = Timestamp.fromDate(
-        DateTime(date.year, date.month, date.day, 23, 59, 59));
+    DateTime now = DateTime.now();
+    Timestamp startOfMonth =
+        Timestamp.fromDate(DateTime(now.year, now.month, 1, 0, 0, 0));
+    Timestamp endOfMonth =
+        Timestamp.fromDate(DateTime(now.year, now.month + 1, 0, 23, 59, 59));
 
     QuerySnapshot snapshot = await _firestore
         .collection('daily_spending')
-        .where('timestamp', isGreaterThanOrEqualTo: startOfDay)
-        .where('timestamp', isLessThanOrEqualTo: endOfDay)
+        .where('timestamp', isGreaterThanOrEqualTo: startOfMonth)
+        .where('timestamp', isLessThanOrEqualTo: endOfMonth)
         .get();
     setState(() {
       dailySpendings = snapshot.docs
@@ -213,33 +219,153 @@ class GoalsScreenState extends State<GoalsScreen> {
     _fetchGoals();
   }
 
+  final constants = Constants();
   @override
   Widget build(BuildContext context) {
+    double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.yellow,
-        title: const Text('Manage Goals'),
+        backgroundColor: constants.primaryColor,
+        title: const Text('GOALS'),
+        actions: [
+          TextButton(
+              onPressed: () {
+                _distributeMoney();
+              },
+              child:const Text('disburse'))
+        ],
       ),
       body: ListView.builder(
         itemCount: _goals.length,
         itemBuilder: (context, index) {
           final goal = _goals[index];
-          return ListTile(
-            title: Text(goal.name),
-            subtitle: Text(
-                'Required: ${goal.requiredAmount}, \nAllocated: ${goal.allocatedAmount}, \nPercentage: ${goal.percentage}%'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => _editGoal(goal),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () => _deleteGoal(goal.id),
-                ),
-              ],
+          return Card(
+            margin: const EdgeInsets.all(15),
+            elevation: 5,
+            shadowColor: const Color.fromARGB(255, 104, 94, 5),
+            child: ListTile(
+              title: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        'GOAL',
+                        style: constants.boldFont,
+                      ),
+                      SizedBox(
+                        width: w * 0.4,
+                      ),
+                      Text(
+                        goal.name,
+                        style: constants.normalFont,
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        'GOAL AMOUNT',
+                        style: constants.boldFont,
+                      ),
+                      SizedBox(
+                        width: w * 0.23,
+                      ),
+                      Text(
+                        '${goal.requiredAmount}',
+                        style: constants.normalFont,
+                      )
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AMOUNT PAID',
+                        style: constants.boldFont,
+                      ),
+                      SizedBox(
+                        width: w * 0.25,
+                      ),
+                      Text(
+                        '${goal.allocatedAmount}',
+                        style: constants.normalFont,
+                      )
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AMOUNT REMAINING',
+                        style: constants.boldFont,
+                      ),
+                      SizedBox(
+                        width: w * 0.13,
+                      ),
+                      Text(
+                        'remainder',
+                        style: constants.normalFont,
+                      )
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        'TIME SPAN',
+                        style: constants.boldFont,
+                      ),
+                      SizedBox(
+                        width: w * 0.3,
+                      ),
+                      Text(
+                        'TO AND FROM',
+                        style: constants.normalFont,
+                      )
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        'PERCENTAGE',
+                        style: constants.boldFont,
+                      ),
+                      SizedBox(
+                        width: w * 0.25,
+                      ),
+                      Text(
+                        '${goal.percentage}',
+                        style: constants.normalFont,
+                      )
+                    ],
+                  )
+                ],
+              ),
+              subtitle: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    child: const Text(
+                      'EDIT',
+                      style:
+                          TextStyle(color: Color.fromARGB(255, 161, 147, 19)),
+                    ),
+                    onPressed: () => _editGoal(goal),
+                  ),
+                  TextButton(
+                    child: const Text(
+                      'DELETE',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    onPressed: () => _deleteGoal(goal.id),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -252,10 +378,4 @@ class GoalsScreenState extends State<GoalsScreen> {
       ),
     );
   }
-}
-
-void main() {
-  runApp(const MaterialApp(
-    home: GoalsScreen(),
-  ));
 }

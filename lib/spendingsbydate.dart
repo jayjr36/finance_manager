@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:finance_manager/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -47,12 +48,21 @@ class DailySpendingByDateScreenState extends State<DailySpendingByDateScreen> {
       _fetchDailySpendings(picked);
     }
   }
+final constants = Constants();
+
+String _formatTimestamp(Timestamp timestamp) {
+  final DateTime dateTime = timestamp.toDate().toLocal();
+  final DateFormat formatter = DateFormat('dd MMM yyyy');
+  return formatter.format(dateTime);
+}
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daily Spendings by Date'),
+        backgroundColor: constants.primaryColor,
+        title:Text('Daily Spendings by Date', style: constants.headerText,),
       ),
       body: Column(
         children: [
@@ -65,11 +75,11 @@ class DailySpendingByDateScreenState extends State<DailySpendingByDateScreen> {
                     selectedDate == null
                         ? 'Select a date'
                         : 'Selected Date: ${DateFormat.yMMMd().format(selectedDate!)}',
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 12),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.calendar_today),
+                  icon: const Icon(Icons.calendar_today, size: 15,),
                   onPressed: () => _selectDate(context),
                 ),
               ],
@@ -84,8 +94,8 @@ class DailySpendingByDateScreenState extends State<DailySpendingByDateScreen> {
                     itemBuilder: (context, index) {
                       final spending = dailySpendings[index];
                       return ListTile(
-                        title: Text('${spending['name']} - \$${spending['amount'].toStringAsFixed(2)}'),
-                        subtitle: Text((spending['timestamp'] as Timestamp).toDate().toString()),
+                        title: Text('${spending['name']} - ${spending['amount'].toStringAsFixed(2)}'),
+                        subtitle: Text(_formatTimestamp(spending['timestamp']) ),
                       );
                     },
                   ),

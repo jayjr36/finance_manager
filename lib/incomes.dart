@@ -1,6 +1,7 @@
 // ignore_for_file: no_leading_underscores_for_local_identifiers, use_build_context_synchronously
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:finance_manager/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -70,7 +71,7 @@ class IncomeScreenState extends State<IncomeScreen> {
                 'timestamp': Timestamp.now()
               });
               Navigator.of(context).pop();
-              _fetchIncomes(); 
+              _fetchIncomes();
             },
             child: const Text('Add'),
           ),
@@ -140,14 +141,15 @@ class IncomeScreenState extends State<IncomeScreen> {
     _fetchIncomes(); // Refresh the list
   }
 
+  final constants = Constants();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.yellow,
-        title: const Text(
-          'Income Tracker',
-          style: TextStyle(color: Colors.white),
+        backgroundColor: constants.primaryColor,
+        title: Text(
+          'Source of Fund',
+          style: constants.headerText,
         ),
       ),
       body: ListView(
@@ -157,11 +159,11 @@ class IncomeScreenState extends State<IncomeScreen> {
             children: [
               ...incomes.map((income) => ListTile(
                     title: Text('${income['name']} - ${income['amount']}'),
-                     subtitle: Text(
-                        DateFormat('dd MMMM yyyy').format(
-                          (income['timestamp'] as Timestamp).toDate(),
-                        ),
+                    subtitle: Text(
+                      DateFormat('dd MMMM yyyy').format(
+                        (income['timestamp'] as Timestamp).toDate(),
                       ),
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

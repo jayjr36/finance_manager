@@ -1,5 +1,6 @@
 import 'package:finance_manager/expense.dart';
 import 'package:finance_manager/home.dart';
+import 'package:finance_manager/register.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 137, 152, 1)),
         useMaterial3: true,
       ),
-      home: HomePage(),
+      home: const RegisterScreen(),
     );
   }
 }

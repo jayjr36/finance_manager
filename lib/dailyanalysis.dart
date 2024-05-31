@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:finance_manager/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -27,8 +28,10 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
   }
 
   Future<void> _fetchAnalysisData() async {
-    QuerySnapshot snapshot = await _firestore.collection('expense_analysis').get();
-    List<Map<String, dynamic>> data = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+    QuerySnapshot snapshot =
+        await _firestore.collection('expense_analysis').get();
+    List<Map<String, dynamic>> data =
+        snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
     double overspent = 0.0;
     double saved = 0.0;
 
@@ -48,7 +51,8 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
   }
 
   Future<void> _fetchTotalPredefinedBudget() async {
-    QuerySnapshot snapshot = await _firestore.collection('daily_expenses').get();
+    QuerySnapshot snapshot =
+        await _firestore.collection('daily_expenses').get();
     double budget = 0.0;
 
     for (var expense in snapshot.docs) {
@@ -65,10 +69,15 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
     double amount = double.parse(_amountController.text);
 
     // Save daily spending
-    await _firestore.collection('daily_spending').add({'name': name, 'amount': amount, 'timestamp': Timestamp.now()});
+    await _firestore
+        .collection('daily_spending')
+        .add({'name': name, 'amount': amount, 'timestamp': Timestamp.now()});
 
     // Compare with predefined budget
-    QuerySnapshot budgetSnapshot = await _firestore.collection('daily_expenses').where('name', isEqualTo: name).get();
+    QuerySnapshot budgetSnapshot = await _firestore
+        .collection('daily_expenses')
+        .where('name', isEqualTo: name)
+        .get();
     if (budgetSnapshot.docs.isNotEmpty) {
       double predefinedAmount = budgetSnapshot.docs.first['amount'];
       double difference = predefinedAmount - amount;
@@ -98,11 +107,16 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
     _amountController.clear();
   }
 
+  final constants = Constants();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daily Tracker'),
+        backgroundColor: constants.primaryColor,
+        title: Text(
+          'Expense Analyzer',
+          style: constants.headerText,
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -132,20 +146,28 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
 
                         return DataRow(cells: [
                           DataCell(Text(data['name'])),
-                          DataCell(Text('${data['amount'].toStringAsFixed(2)}')),
-                          DataCell(Text(data['status'], style: TextStyle(color: statusColor))),
-                          DataCell(Text('${data['difference'].toStringAsFixed(2)}')),
+                          DataCell(
+                              Text('${data['amount'].toStringAsFixed(2)}')),
+                          DataCell(Text(data['status'],
+                              style: TextStyle(color: statusColor))),
+                          DataCell(
+                              Text('${data['difference'].toStringAsFixed(2)}')),
                           DataCell(Text(
-                             DateFormat('dd MMMM yyyy').format(
-                          ((data['timestamp'] as Timestamp).toDate())),))
+                            DateFormat('dd MMMM yyyy').format(
+                                ((data['timestamp'] as Timestamp).toDate())),
+                          ))
                         ]);
                       }).toList(),
                     ),
                   ),
             const SizedBox(height: 20),
-            Text('Total Amount Overspent: ${totalOverspent.toStringAsFixed(0)}', style: const TextStyle(color: Colors.red)),
-            Text('Total Amount Saved: ${totalSaved.toStringAsFixed(0)}', style: const TextStyle(color: Colors.green)),
-            Text('Total Predefined Daily Budget: ${totalPredefinedBudget.toStringAsFixed(0)}', style: const TextStyle(color: Colors.blue)),
+            Text('Total Amount Overspent: ${totalOverspent.toStringAsFixed(0)}',
+                style: const TextStyle(color: Colors.red)),
+            Text('Total Amount Saved: ${totalSaved.toStringAsFixed(0)}',
+                style: const TextStyle(color: Colors.green)),
+            Text(
+                'Total Predefined Daily Budget: ${totalPredefinedBudget.toStringAsFixed(0)}',
+                style: const TextStyle(color: Colors.blue)),
           ],
         ),
       ),
