@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:finance_manager/constants.dart';
 import 'package:finance_manager/login.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +28,6 @@ class RegisterScreenState extends State<RegisterScreen> {
           password: _passwordController.text,
         );
 
-        // Save the PIN to Firestore
         await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
@@ -178,7 +179,7 @@ class RegisterScreenState extends State<RegisterScreen> {
             ClipPath(
               clipper: _CenterCurveClipper(),
               child: Container(
-                height: h * 0.17,
+                height: h * 0.2,
                 width: w,
                 decoration: const BoxDecoration(color: Colors.amber),
               ),
@@ -206,4 +207,3 @@ class _CenterCurveClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
-
