@@ -1,6 +1,7 @@
 import 'package:finance_manager/constants.dart';
 import 'package:finance_manager/dailyinput.dart';
 import 'package:finance_manager/spendingsbydate.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -14,6 +15,7 @@ class BudgetScreen extends StatefulWidget {
 
 class BudgetScreenState extends State<BudgetScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String uid = FirebaseAuth.instance.currentUser!.uid;
   Constants constants = Constants();
   double totalExpense = 0.0;
   double totalDailyExpense = 0.0;
@@ -47,7 +49,7 @@ class BudgetScreenState extends State<BudgetScreen> {
             TextButton(
               child: const Text('Add'),
               onPressed: () {
-                _firestore.collection('categories').add({
+                _firestore.collection('categories').doc(uid).collection('my_categories').add({
                   'name': categoryController.text,
                 });
                 Navigator.of(context).pop();
@@ -95,6 +97,8 @@ class BudgetScreenState extends State<BudgetScreen> {
               onPressed: () {
                 _firestore
                     .collection('categories')
+                    .doc(uid)
+                    .collection('my_categories')
                     .doc(categoryId)
                     .collection('expenses')
                     .add({
@@ -149,6 +153,8 @@ class BudgetScreenState extends State<BudgetScreen> {
               onPressed: () {
                 _firestore
                     .collection('categories')
+                    .doc(uid)
+                    .collection('my_categories')
                     .doc(categoryId)
                     .collection('expenses')
                     .doc(expenseId)
@@ -169,6 +175,8 @@ class BudgetScreenState extends State<BudgetScreen> {
   Future<void> _deleteExpense(String categoryId, String expenseId) async {
     _firestore
         .collection('categories')
+        .doc(uid)
+        .collection('my_categories')
         .doc(categoryId)
         .collection('expenses')
         .doc(expenseId)
@@ -179,11 +187,13 @@ class BudgetScreenState extends State<BudgetScreen> {
     double totalBudget = 0.0;
 
     QuerySnapshot categorySnapshot =
-        await _firestore.collection('categories').get();
+        await _firestore.collection('categories').doc(uid).collection('my_categories').get();
 
     for (var category in categorySnapshot.docs) {
       QuerySnapshot expenseSnapshot = await _firestore
           .collection('categories')
+          .doc(uid)
+          .collection('my_categories')
           .doc(category.id)
           .collection('expenses')
           .get();
@@ -203,7 +213,7 @@ class BudgetScreenState extends State<BudgetScreen> {
     double totalSpendings = 0.0;
 
     QuerySnapshot dailySpendingsSnapshot =
-        await _firestore.collection('daily_spendings').get();
+        await _firestore.collection('daily_spendings').doc(uid).collection('my_daily_spendings').get();
 
     for (var spending in dailySpendingsSnapshot.docs) {
       totalSpendings += spending['amount'];
@@ -287,7 +297,7 @@ class BudgetScreenState extends State<BudgetScreen> {
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('categories').snapshots(),
+              stream: _firestore.collection('categories').doc(uid).collection('my_categories').snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
@@ -329,6 +339,8 @@ class BudgetScreenState extends State<BudgetScreen> {
                         StreamBuilder<QuerySnapshot>(
                           stream: _firestore
                               .collection('categories')
+                              .doc(uid)
+                              .collection('my_categories')
                               .doc(category.id)
                               .collection('expenses')
                               .snapshots(),
@@ -415,11 +427,11 @@ class BudgetScreenState extends State<BudgetScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        tooltip: 'Create category',
-        child: const Icon(Icons.add),
-        onPressed: () {
-        _addCategory;
-      }),
+          tooltip: 'Create category',
+          child: const Icon(Icons.add),
+          onPressed: () {
+            _addCategory;
+          }),
     );
   }
 }

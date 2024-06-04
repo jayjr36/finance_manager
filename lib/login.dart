@@ -1,4 +1,5 @@
 import 'package:finance_manager/constants.dart';
+import 'package:finance_manager/pinverification.dart';
 import 'package:finance_manager/register.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -118,29 +119,32 @@ class LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
                       ),
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.start,
-                        alignment: WrapAlignment.center,
-                        runAlignment: WrapAlignment.center,
-                        children: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const RegisterScreen()),
+                          );
+                        },
+                        child: const Text(
+                          'Create a new account',
+                          style: TextStyle(
+                              color: Color.fromARGB(255, 2, 40, 71)),
+                        ),
+                      ),
+                      TextButton(
+                          onPressed: () {
+                            Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) =>
-                                        const RegisterScreen()),
-                              );
-                            },
-                            child: const Text(
-                              'Create a new account',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      ),
+                                    builder: ((context) =>
+                                        PinVerificationScreen())));
+                          },
+                          child: const Text('PIN SCREEN')),
                       SizedBox(
-                        height: h * 0.2,
+                        height: h * 0.15,
                       )
                     ],
                   ),

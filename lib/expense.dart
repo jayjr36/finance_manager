@@ -1,6 +1,7 @@
 import 'package:finance_manager/budgetscreen.dart';
 import 'package:finance_manager/dailyinput.dart';
 import 'package:finance_manager/goals.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finance_manager/spendingsbydate.dart';
@@ -15,6 +16,7 @@ class ExpenseScreen extends StatefulWidget {
 
 class ExpenseScreenState extends State<ExpenseScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String uid = FirebaseAuth.instance.currentUser!.uid;
   List<Map<String, dynamic>> dailyExpenses = [];
   List<Map<String, dynamic>> weeklyExpenses = [];
   double totalDailyExpenses = 0.0;
@@ -29,10 +31,10 @@ class ExpenseScreenState extends State<ExpenseScreen> {
 
   Future<void> _fetchExpenses() async {
     try {
-      QuerySnapshot dailySnapshot = await _firestore.collection('daily_expenses').get();
+      QuerySnapshot dailySnapshot = await _firestore.collection('daily_expenses').doc(uid).collection('my_daily_expense').get();
       List<Map<String, dynamic>> dailyData = dailySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
 
-      QuerySnapshot weeklySnapshot = await _firestore.collection('weekly_expenses').get();
+      QuerySnapshot weeklySnapshot = await _firestore.collection('weekly_expenses').doc(uid).collection('my_weekly_expense').get();
       List<Map<String, dynamic>> weeklyData = weeklySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
       double dailyTotal = dailySnapshot.docs.fold(0, (sum, doc) => sum + (doc.data() as Map<String, dynamic>)['amount']);
       double weeklyTotal = weeklySnapshot.docs.fold(0, (sum, doc) => sum + (doc.data() as Map<String, dynamic>)['amount']);
@@ -79,7 +81,7 @@ class ExpenseScreenState extends State<ExpenseScreen> {
               try {
                 String name = nameController.text;
                 double amount = double.parse(amountController.text);
-                await _firestore.collection(collection).add({
+                await _firestore.collection('expenses').doc(uid).collection(collection).add({
                   'name': name,
                   'amount': amount,
                   'timestamp': Timestamp.now()

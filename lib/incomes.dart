@@ -2,6 +2,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finance_manager/constants.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -14,6 +15,7 @@ class IncomeScreen extends StatefulWidget {
 
 class IncomeScreenState extends State<IncomeScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String uid = FirebaseAuth.instance.currentUser!.uid;
   List<Map<String, dynamic>> incomes = [];
   double totalIncomes = 0.0;
 
@@ -24,7 +26,7 @@ class IncomeScreenState extends State<IncomeScreen> {
   }
 
   Future<void> _fetchIncomes() async {
-    QuerySnapshot incomeSnapshot = await _firestore.collection('incomes').get();
+    QuerySnapshot incomeSnapshot = await _firestore.collection('incomes').doc(uid).collection('my_incomes').get();
     List<Map<String, dynamic>> data = incomeSnapshot.docs.map((doc) {
       Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
       docData['id'] = doc.id;
@@ -65,7 +67,7 @@ class IncomeScreenState extends State<IncomeScreen> {
             onPressed: () async {
               String name = _nameController.text;
               double amount = double.parse(_amountController.text);
-              await _firestore.collection('incomes').add({
+              await _firestore.collection('incomes').doc(uid).collection('my_incomes').add({
                 'name': name,
                 'amount': amount,
                 'timestamp': Timestamp.now()
@@ -115,7 +117,7 @@ class IncomeScreenState extends State<IncomeScreen> {
             onPressed: () async {
               String name = _nameController.text;
               double amount = double.parse(_amountController.text);
-              await _firestore.collection('incomes').doc(id).update({
+              await _firestore.collection('incomes').doc(uid).collection('my_incomes').doc(id).update({
                 'name': name,
                 'amount': amount,
                 'timestamp': Timestamp.now()
@@ -137,7 +139,7 @@ class IncomeScreenState extends State<IncomeScreen> {
   }
 
   Future<void> _deleteIncome(String id) async {
-    await _firestore.collection('incomes').doc(id).delete();
+    await _firestore.collection('incomes').doc(uid).collection('my_incomes').doc(id).delete();
     _fetchIncomes(); // Refresh the list
   }
 

@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class DailyExpenseScreen extends StatefulWidget {
@@ -12,6 +13,7 @@ class DailyExpenseScreen extends StatefulWidget {
 
 class DailyExpenseScreenState extends State<DailyExpenseScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String uid = FirebaseAuth.instance.currentUser!.uid;
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
 
@@ -39,7 +41,7 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
             onPressed: () async {
               String name = _nameController.text.trim();
               double amount = double.parse(_amountController.text.trim());
-              await _firestore.collection('daily_spendings').add({'name': name, 'amount': amount, 'timestamp': Timestamp.now()});
+              await _firestore.collection('daily_spending').doc(uid).collection('my_daily_spending').add({'name': name, 'amount': amount, 'timestamp': Timestamp.now()});
               Navigator.of(context).pop();
               _analyzeSpending(name, amount);
             },
@@ -57,7 +59,7 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
   }
 
   Future<void> _analyzeSpending(String name, double amount) async {
-    QuerySnapshot budgetSnapshot = await _firestore.collection('daily_expenses').where('name', isEqualTo: name).get();
+    QuerySnapshot budgetSnapshot = await _firestore.collection('daily_expenses').doc(uid).collection('my_daily_expenses').where('name', isEqualTo: name).get();
     if (budgetSnapshot.docs.isNotEmpty) {
       double budgetAmount = budgetSnapshot.docs.first['amount'];
       String status;
@@ -73,7 +75,7 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
         difference = amount - budgetAmount;
       }
 
-      await _firestore.collection('expense_analysis').add({
+      await _firestore.collection('expense_analysis').doc(uid).collection('my_expense_analysis').add({
         'name': name,
         'amount': amount,
         'status': status,
@@ -83,7 +85,7 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Expense Analysis: $status')));
     } else {
-      await _firestore.collection('expense_analysis').add({
+      await _firestore.collection('expense_analysis').doc(uid).collection('my_expense_analysis').add({
         'name': name,
         'amount': amount,
         'status': 'out of budget',

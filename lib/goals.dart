@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finance_manager/constants.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -53,6 +54,7 @@ class GoalsScreen extends StatefulWidget {
 
 class GoalsScreenState extends State<GoalsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String uid = FirebaseAuth.instance.currentUser!.uid;
   List<Goal> _goals = [];
   List<Map<String, dynamic>> dailySpendings = [];
   List<Map<String, dynamic>> incomes = [];
@@ -67,7 +69,7 @@ class GoalsScreenState extends State<GoalsScreen> {
   }
 
   Future<void> _fetchGoals() async {
-    QuerySnapshot snapshot = await _firestore.collection('goals').get();
+    QuerySnapshot snapshot = await _firestore.collection('goals').doc(uid).collection('my_goals').get();
     setState(() {
       _goals = snapshot.docs.map((doc) => Goal.fromFirestore(doc)).toList();
     });
@@ -93,7 +95,7 @@ class GoalsScreenState extends State<GoalsScreen> {
   }
 
   Future<void> _fetchIncomes() async {
-    QuerySnapshot snapshot = await _firestore.collection('incomes').get();
+    QuerySnapshot snapshot = await _firestore.collection('incomes').doc(uid).collection('my_incomes').get();
     List<Map<String, dynamic>> data = snapshot.docs.map((doc) {
       Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
       docData['id'] = doc.id;
@@ -117,6 +119,8 @@ class GoalsScreenState extends State<GoalsScreen> {
           goal.requiredAmount > allocation ? allocation : goal.requiredAmount;
       _firestore
           .collection('goals')
+          .doc(uid)
+          .collection('my_goals')
           .doc(goal.id)
           .update({'allocatedAmount': updatedAmount});
     }
@@ -184,7 +188,7 @@ class GoalsScreenState extends State<GoalsScreen> {
                     requiredAmount: requiredAmount,
                     percentage: percentage,
                   );
-                  await _firestore.collection('goals').add(newGoal.toMap());
+                  await _firestore.collection('goals').doc(uid).collection('my_goals').add(newGoal.toMap());
                 } else {
                   // Update existing goal
                   final updatedGoal = Goal(
@@ -196,6 +200,8 @@ class GoalsScreenState extends State<GoalsScreen> {
                   );
                   await _firestore
                       .collection('goals')
+                      .doc(uid)
+                      .collection('my_goals')
                       .doc(goal.id)
                       .update(updatedGoal.toMap());
                 }
@@ -215,7 +221,7 @@ class GoalsScreenState extends State<GoalsScreen> {
   }
 
   void _deleteGoal(String goalId) async {
-    await _firestore.collection('goals').doc(goalId).delete();
+    await _firestore.collection('goals').doc(uid).collection('my_goals').doc(goalId).delete();
     _fetchGoals();
   }
 

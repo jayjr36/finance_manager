@@ -1,3 +1,4 @@
+import 'package:finance_manager/constants.dart';
 import 'package:finance_manager/home.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,7 +19,10 @@ class PinVerificationScreenState extends State<PinVerificationScreen> {
     if (_formKey.currentState!.validate()) {
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
         String savedPin = userDoc['pin'];
         if (_pinController.text == savedPin) {
           Navigator.pushReplacement(
@@ -26,7 +30,8 @@ class PinVerificationScreenState extends State<PinVerificationScreen> {
             MaterialPageRoute(builder: (context) => const HomePage()),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Incorrect PIN')));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('Incorrect PIN')));
         }
       }
     }
@@ -34,19 +39,24 @@ class PinVerificationScreenState extends State<PinVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double h = MediaQuery.of(context).size.height;
+    double w = MediaQuery.of(context).size.width;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Verify PIN'),
-      ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.symmetric(vertical: h * 0.1, horizontal: w * 0.1),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
+              Center(child: Image.asset('assets/image1.png')),
+              Center(child: Image.asset('assets/image2.png')),
+              SizedBox(
+                height: h * 0.1,
+              ),
               TextFormField(
                 controller: _pinController,
-                decoration: const InputDecoration(labelText: 'Enter 6-digit PIN'),
+                decoration:
+                    const InputDecoration(labelText: 'Enter 6-digit PIN'),
                 validator: (value) {
                   if (value == null || value.length != 6) {
                     return 'Please enter a 6-digit PIN';
@@ -58,12 +68,21 @@ class PinVerificationScreenState extends State<PinVerificationScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _verifyPin,
-          child: const Text('Verify PIN'),
-                  ),
-                ],
+                 style: ElevatedButton.styleFrom(
+                            backgroundColor: Constants().primaryColor,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: w * 0.3, vertical: h * 0.003)),
+                child: const Text('Verify PIN',  style: TextStyle(color: Colors.white, fontSize: 16),),
               ),
-            ),
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'))
+            ],
           ),
-        );
-      }
-    }
+        ),
+      ),
+    );
+  }
+}

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finance_manager/constants.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -12,6 +13,7 @@ class DailySpendingByDateScreen extends StatefulWidget {
 
 class DailySpendingByDateScreenState extends State<DailySpendingByDateScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String uid = FirebaseAuth.instance.currentUser!.uid;
   DateTime? selectedDate;
   List<Map<String, dynamic>> dailySpendings = [];
 
@@ -25,6 +27,8 @@ class DailySpendingByDateScreenState extends State<DailySpendingByDateScreen> {
     Timestamp endOfDay = Timestamp.fromDate(DateTime(date.year, date.month, date.day, 23, 59, 59));
 
     QuerySnapshot snapshot = await _firestore.collection('daily_spending')
+    .doc(uid)
+    .collection('my_daily_spending')
       .where('timestamp', isGreaterThanOrEqualTo: startOfDay)
       .where('timestamp', isLessThanOrEqualTo: endOfDay)
       .get();
