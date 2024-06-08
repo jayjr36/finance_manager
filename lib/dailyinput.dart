@@ -14,10 +14,28 @@ class DailyExpenseScreen extends StatefulWidget {
 class DailyExpenseScreenState extends State<DailyExpenseScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String uid = FirebaseAuth.instance.currentUser!.uid;
-  final _nameController = TextEditingController();
   final _amountController = TextEditingController();
+  String? _selectedCategory;
+  bool _isCustomCategory = false;
+  final _customCategoryController = TextEditingController();
 
-  Future<void> _addSpending() async {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Daily Spending Input'),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: _addSpending,
+          child: const Text('Add Daily Spending'),
+        ),
+      ),
+    );
+  }
+
+  
+   Future<void> _addSpending() async {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -25,10 +43,36 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(hintText: 'Enter expense name'),
+            StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('categories').doc(uid).collection('my_categories').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const CircularProgressIndicator();
+                }
+                var categories = snapshot.data!.docs;
+                return DropdownButton<String>(
+                  value: _selectedCategory,
+                  hint: const Text('Select expense'),
+                  items: categories.map((category) {
+                    return DropdownMenuItem<String>(
+                      value: category['name'],
+                      child: Text(category['name']),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCategory = value;
+                      _isCustomCategory = value == 'Other';
+                    });
+                  },
+                );
+              },
             ),
+            if (_isCustomCategory)
+              TextField(
+                controller: _customCategoryController,
+                decoration: const InputDecoration(hintText: 'Enter expense'),
+              ),
             TextField(
               controller: _amountController,
               decoration: const InputDecoration(hintText: 'Enter amount'),
@@ -39,9 +83,15 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
         actions: [
           TextButton(
             onPressed: () async {
-              String name = _nameController.text.trim();
+              String name = _isCustomCategory
+                  ? _customCategoryController.text.trim()
+                  : _selectedCategory ?? '';
               double amount = double.parse(_amountController.text.trim());
-              await _firestore.collection('daily_spending').doc(uid).collection('my_daily_spending').add({'name': name, 'amount': amount, 'timestamp': Timestamp.now()});
+              await _firestore.collection('daily_spending').doc(uid).collection('my_daily_spending').add({
+                'name': name,
+                'amount': amount,
+                'timestamp': Timestamp.now(),
+              });
               Navigator.of(context).pop();
               _analyzeSpending(name, amount);
             },
@@ -59,55 +109,49 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
   }
 
   Future<void> _analyzeSpending(String name, double amount) async {
-    QuerySnapshot budgetSnapshot = await _firestore.collection('daily_expenses').doc(uid).collection('my_daily_expenses').where('name', isEqualTo: name).get();
-    if (budgetSnapshot.docs.isNotEmpty) {
-      double budgetAmount = budgetSnapshot.docs.first['amount'];
-      String status;
-      double difference;
-      if (amount < budgetAmount) {
-        status = 'Saved Money';
-        difference = budgetAmount - amount;
-      } else if (amount == budgetAmount) {
-        status = 'Within Budget';
-        difference = 0;
-      } else {
-        status = 'Overspent';
-        difference = amount - budgetAmount;
-      }
+  // Fetch the predefined budget for the given category
+  QuerySnapshot budgetSnapshot = await _firestore.collection('categories').doc(uid).collection('my_categories').where('name', isEqualTo: name).get();
+  if (budgetSnapshot.docs.isNotEmpty) {
+    double budgetAmount = budgetSnapshot.docs.first['amount'];
+    
+    // Calculate the total daily spending for that category
+    QuerySnapshot dailyExpensesSnapshot = await _firestore.collection('daily_spending').doc(uid).collection('my_daily_spending').where('name', isEqualTo: name).get();
+    double totalDailySpending = dailyExpensesSnapshot.docs.fold(0, (total, doc) => total + doc['amount']);
 
-      await _firestore.collection('expense_analysis').doc(uid).collection('my_expense_analysis').add({
-        'name': name,
-        'amount': amount,
-        'status': status,
-        'difference': difference,
-        'timestamp': Timestamp.now(),
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Expense Analysis: $status')));
+    // Compare the total daily spending with the budget
+    String status;
+    double difference = budgetAmount - totalDailySpending;
+    if (totalDailySpending < budgetAmount) {
+      status = 'Within Budget';
+    } else if (totalDailySpending == budgetAmount) {
+      status = 'Budget reached';
     } else {
-      await _firestore.collection('expense_analysis').doc(uid).collection('my_expense_analysis').add({
-        'name': name,
-        'amount': amount,
-        'status': 'out of budget',
-        'difference': 0,
-        'timestamp': Timestamp.now(),
-      });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No predefined budget found for $name')));
+      status = 'Overspent';
+      difference = totalDailySpending - budgetAmount;
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daily Spending Input'),
-      ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: _addSpending,
-          child: const Text('Add Daily Spending'),
-        ),
-      ),
-    );
+    // Update Firestore with the analysis
+    await _firestore.collection('expense_analysis').doc(uid).collection('my_expense_analysis').add({
+      'name': name,
+      'amount': amount,
+      'total_daily_spending': totalDailySpending,
+      'status': status,
+      'difference': difference,
+      'timestamp': Timestamp.now(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Expense Analysis: $status')));
+  } else {
+    await _firestore.collection('expense_analysis').doc(uid).collection('my_expense_analysis').add({
+      'name': name,
+      'amount': amount,
+      'total_daily_spending': amount,
+      'status': 'No predefined budget found',
+      'difference': 0,
+      'timestamp': Timestamp.now(),
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No predefined budget found for $name')));
   }
+}
+
 }

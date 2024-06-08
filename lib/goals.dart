@@ -58,7 +58,7 @@ class GoalsScreenState extends State<GoalsScreen> {
   List<Goal> _goals = [];
   List<Map<String, dynamic>> dailySpendings = [];
   List<Map<String, dynamic>> incomes = [];
-
+  double _totalPercentage =0.0;
   @override
   void initState() {
     super.initState();
@@ -69,9 +69,20 @@ class GoalsScreenState extends State<GoalsScreen> {
   }
 
   Future<void> _fetchGoals() async {
-    QuerySnapshot snapshot = await _firestore.collection('goals').doc(uid).collection('my_goals').get();
+    QuerySnapshot snapshot = await _firestore
+        .collection('goals')
+        .doc(uid)
+        .collection('my_goals')
+        .get();
+    List<Goal> goals =
+        snapshot.docs.map((doc) => Goal.fromFirestore(doc)).toList();
+
+    double totalPercentage =
+        goals.fold(0, (sum, goal) => sum + goal.percentage);
+
     setState(() {
-      _goals = snapshot.docs.map((doc) => Goal.fromFirestore(doc)).toList();
+      _goals = goals;
+      _totalPercentage = totalPercentage;
     });
   }
 
@@ -95,7 +106,11 @@ class GoalsScreenState extends State<GoalsScreen> {
   }
 
   Future<void> _fetchIncomes() async {
-    QuerySnapshot snapshot = await _firestore.collection('incomes').doc(uid).collection('my_incomes').get();
+    QuerySnapshot snapshot = await _firestore
+        .collection('incomes')
+        .doc(uid)
+        .collection('my_incomes')
+        .get();
     List<Map<String, dynamic>> data = snapshot.docs.map((doc) {
       Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
       docData['id'] = doc.id;
@@ -188,7 +203,11 @@ class GoalsScreenState extends State<GoalsScreen> {
                     requiredAmount: requiredAmount,
                     percentage: percentage,
                   );
-                  await _firestore.collection('goals').doc(uid).collection('my_goals').add(newGoal.toMap());
+                  await _firestore
+                      .collection('goals')
+                      .doc(uid)
+                      .collection('my_goals')
+                      .add(newGoal.toMap());
                 } else {
                   // Update existing goal
                   final updatedGoal = Goal(
@@ -221,7 +240,12 @@ class GoalsScreenState extends State<GoalsScreen> {
   }
 
   void _deleteGoal(String goalId) async {
-    await _firestore.collection('goals').doc(uid).collection('my_goals').doc(goalId).delete();
+    await _firestore
+        .collection('goals')
+        .doc(uid)
+        .collection('my_goals')
+        .doc(goalId)
+        .delete();
     _fetchGoals();
   }
 
@@ -239,7 +263,7 @@ class GoalsScreenState extends State<GoalsScreen> {
               onPressed: () {
                 _distributeMoney();
               },
-              child:const Text('disburse'))
+              child: const Text('disburse'))
         ],
       ),
       body: ListView.builder(

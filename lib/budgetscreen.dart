@@ -49,7 +49,11 @@ class BudgetScreenState extends State<BudgetScreen> {
             TextButton(
               child: const Text('Add'),
               onPressed: () {
-                _firestore.collection('categories').doc(uid).collection('my_categories').add({
+                _firestore
+                    .collection('categories')
+                    .doc(uid)
+                    .collection('my_categories')
+                    .add({
                   'name': categoryController.text,
                 });
                 Navigator.of(context).pop();
@@ -60,19 +64,88 @@ class BudgetScreenState extends State<BudgetScreen> {
       },
     );
   }
+Future<void> _addExpense(String categoryId) async {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController amountController = TextEditingController();
+  final TextEditingController tallyController = TextEditingController();
 
-  Future<void> _addExpense(String categoryId) async {
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController amountController = TextEditingController();
-    final TextEditingController dateController = TextEditingController();
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Add Expense'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(hintText: 'Expense Name'),
+            ),
+            TextField(
+              controller: amountController,
+              decoration: const InputDecoration(hintText: 'Amount'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: tallyController,
+              decoration: const InputDecoration(hintText: 'Tally'),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            child: const Text('Add'),
+            onPressed: () {
+              double amount = double.parse(amountController.text);
+              int tally = tallyController.text.isNotEmpty ? int.parse(tallyController.text) : 1;
+              double totalAmount = amount * tally;
 
+              _firestore
+                  .collection('categories')
+                  .doc(uid)
+                  .collection('my_categories')
+                  .doc(categoryId)
+                  .collection('expenses')
+                  .add({
+                'name': nameController.text,
+                'amount': amount,
+                'tally': tally,
+                'total_amount': totalAmount,
+                'date': DateTime.now(),
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+  Future<void> _editExpense(
+      String categoryId, String expenseId, Map<String, dynamic> expense) async {
+    final TextEditingController nameController =
+        TextEditingController(text: expense['name']);
+    final TextEditingController amountController =
+        TextEditingController(text: expense['amount'].toString());
+    final TextEditingController tallyController =
+        TextEditingController(text: expense['tally'].toString());
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Add Expense'),
+          title: const Text('Edit Expense'),
           content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
@@ -83,60 +156,9 @@ class BudgetScreenState extends State<BudgetScreen> {
                 decoration: const InputDecoration(hintText: 'Amount'),
                 keyboardType: TextInputType.number,
               ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Add'),
-              onPressed: () {
-                _firestore
-                    .collection('categories')
-                    .doc(uid)
-                    .collection('my_categories')
-                    .doc(categoryId)
-                    .collection('expenses')
-                    .add({
-                  'name': nameController.text,
-                  'amount': double.parse(amountController.text),
-                  'date': DateTime.now(),
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _editExpense(
-      String categoryId, String expenseId, Map<String, dynamic> expense) async {
-    final TextEditingController nameController =
-        TextEditingController(text: expense['name']);
-    final TextEditingController amountController =
-        TextEditingController(text: expense['amount'].toString());
-
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Edit Expense'),
-          content: Column(
-            children: [
               TextField(
-                controller: nameController,
-                decoration: const InputDecoration(hintText: 'Expense Name'),
-              ),
-              TextField(
-                controller: amountController,
-                decoration: const InputDecoration(hintText: 'Amount'),
+                controller: tallyController,
+                decoration: const InputDecoration(hintText: 'Tally'),
                 keyboardType: TextInputType.number,
               ),
             ],
@@ -151,6 +173,12 @@ class BudgetScreenState extends State<BudgetScreen> {
             TextButton(
               child: const Text('Save'),
               onPressed: () {
+                double amount = double.parse(amountController.text);
+                int tally = tallyController.text.isNotEmpty
+                    ? int.parse(tallyController.text)
+                    : 1;
+                double totalAmount = amount * tally;
+
                 _firestore
                     .collection('categories')
                     .doc(uid)
@@ -160,7 +188,9 @@ class BudgetScreenState extends State<BudgetScreen> {
                     .doc(expenseId)
                     .update({
                   'name': nameController.text,
-                  'amount': double.parse(amountController.text),
+                  'amount': amount,
+                  'tally': tally,
+                  'total_amount': totalAmount,
                   'date': DateTime.now(),
                 });
                 Navigator.of(context).pop();
@@ -186,8 +216,11 @@ class BudgetScreenState extends State<BudgetScreen> {
   Future<double> _getTotalBudget() async {
     double totalBudget = 0.0;
 
-    QuerySnapshot categorySnapshot =
-        await _firestore.collection('categories').doc(uid).collection('my_categories').get();
+    QuerySnapshot categorySnapshot = await _firestore
+        .collection('categories')
+        .doc(uid)
+        .collection('my_categories')
+        .get();
 
     for (var category in categorySnapshot.docs) {
       QuerySnapshot expenseSnapshot = await _firestore
@@ -212,8 +245,11 @@ class BudgetScreenState extends State<BudgetScreen> {
   Future<double> _getTotalDailySpendings() async {
     double totalSpendings = 0.0;
 
-    QuerySnapshot dailySpendingsSnapshot =
-        await _firestore.collection('daily_spendings').doc(uid).collection('my_daily_spendings').get();
+    QuerySnapshot dailySpendingsSnapshot = await _firestore
+        .collection('daily_spendings')
+        .doc(uid)
+        .collection('my_daily_spendings')
+        .get();
 
     for (var spending in dailySpendingsSnapshot.docs) {
       totalSpendings += spending['amount'];
@@ -241,31 +277,6 @@ class BudgetScreenState extends State<BudgetScreen> {
             icon: const Icon(Icons.add),
             onPressed: _addCategory,
           ),
-          // IconButton(
-          //   icon: const Icon(Icons.calculate),
-          //   onPressed: () async {
-          //     double totalBudget = await _getTotalBudget();
-          //     showDialog<void>(
-          //       context: context,
-          //       barrierDismissible: false,
-          //       builder: (BuildContext context) {
-          //         return AlertDialog(
-          //           title: const Text('Total Budget'),
-          //           content: Text(
-          //               'Total Budget Estimated: \$${totalBudget.toStringAsFixed(2)}'),
-          //           actions: <Widget>[
-          //             TextButton(
-          //               child: const Text('OK'),
-          //               onPressed: () {
-          //                 Navigator.of(context).pop();
-          //               },
-          //             ),
-          //           ],
-          //         );
-          //       },
-          //     );
-          //   },
-          // ),
         ],
       ),
       body: Column(
@@ -297,7 +308,11 @@ class BudgetScreenState extends State<BudgetScreen> {
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('categories').doc(uid).collection('my_categories').snapshots(),
+              stream: _firestore
+                  .collection('categories')
+                  .doc(uid)
+                  .collection('my_categories')
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
