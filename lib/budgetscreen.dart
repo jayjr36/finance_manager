@@ -4,7 +4,6 @@ import 'package:finance_manager/spendingsbydate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -232,7 +231,7 @@ Future<void> _addExpense(String categoryId) async {
           .get();
 
       for (var expense in expenseSnapshot.docs) {
-        totalBudget += expense['amount'];
+        totalBudget += expense['total_amount'];
       }
     }
     setState(() {
@@ -244,11 +243,10 @@ Future<void> _addExpense(String categoryId) async {
 
   Future<double> _getTotalDailySpendings() async {
     double totalSpendings = 0.0;
-
     QuerySnapshot dailySpendingsSnapshot = await _firestore
-        .collection('daily_spendings')
+        .collection('daily_spending')
         .doc(uid)
-        .collection('my_daily_spendings')
+        .collection('my_daily_spending')
         .get();
 
     for (var spending in dailySpendingsSnapshot.docs) {
@@ -286,26 +284,7 @@ Future<void> _addExpense(String categoryId) async {
             "Set Your budget by creating categories",
             style: constants.headerText,
           )),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const DailySpendingByDateScreen()),
-              );
-            },
-            child: const Text('Spendings By Date'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const DailyExpenseScreen()),
-              );
-            },
-            child: const Text('Daily records'),
-          ),
+         
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _firestore
@@ -384,7 +363,7 @@ Future<void> _addExpense(String categoryId) async {
                                         width: w * 0.3,
                                       ),
                                       Text(
-                                        '${expenseData['amount']}',
+                                        '${expenseData['total_amount']}',
                                         style: constants.normalFont,
                                       ),
                                     ],
@@ -417,11 +396,6 @@ Future<void> _addExpense(String categoryId) async {
                             );
                           },
                         ),
-                        // ListTile(
-                        //   leading: const Icon(Icons.add),
-                        //   title: const Text('Add Expense'),
-                        //   onTap: () => _addExpense(category.id),
-                        // ),
                       ],
                     );
                   },
@@ -432,12 +406,12 @@ Future<void> _addExpense(String categoryId) async {
           const Center(child: Text('SUMMARY')),
           Wrap(
             children: [
-              const Text('Estimated Expenditure: '),
+              const Text('Estimated Budget: '),
               Text('$totalExpense')
             ],
           ),
           Wrap(
-            children: [const Text('Spent: '), Text('$totalDailyExpense')],
+            children: [const Text('Amount Spent: '), Text('$totalDailyExpense')],
           )
         ],
       ),
