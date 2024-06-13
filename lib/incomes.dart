@@ -1,10 +1,9 @@
-// ignore_for_file: no_leading_underscores_for_local_identifiers, use_build_context_synchronously
+// ignore_for_file: no_leading_underscores_for_local_identifiers, use_build_context_synchronously, avoid_types_as_parameter_names
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finance_manager/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class IncomeScreen extends StatefulWidget {
   const IncomeScreen({super.key});
@@ -75,13 +74,13 @@ class IncomeScreenState extends State<IncomeScreen> {
               Navigator.of(context).pop();
               _fetchIncomes();
             },
-            child: const Text('Add'),
+            child: const Text('Add', style: TextStyle(color: Colors.green),),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Colors.red),),
           ),
         ],
       ),
@@ -157,34 +156,55 @@ class IncomeScreenState extends State<IncomeScreen> {
       body: ListView(
         children: [
           ExpansionTile(
-            title: const Text('Incomes'),
+            title:  Container(
+                          decoration: BoxDecoration(
+                              borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(20),
+                                  bottomRight: Radius.circular(20)),
+                              color: constants.primaryColor),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                ' Funds',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              IconButton(
+                                  onPressed: () {
+                                    _addIncome();
+                                  },
+                                  icon: const Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                  ))
+                            ],
+                          )),
             children: [
               ...incomes.map((income) => ListTile(
-                    title: Text('${income['name']} - ${income['amount']}'),
-                    subtitle: Text(
-                      DateFormat('dd MMMM yyyy').format(
-                        (income['timestamp'] as Timestamp).toDate(),
-                      ),
-                    ),
+                    title: Text('${income['name']}           ${income['amount']}', 
+                    style: constants.normalFont,),
+                   
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
+                          color: Colors.amber,
                           icon: const Icon(Icons.edit),
                           onPressed: () => _editIncome(
                               income['id'], income['name'], income['amount']),
                         ),
                         IconButton(
+                          color: Colors.red,
                           icon: const Icon(Icons.delete),
                           onPressed: () => _deleteIncome(income['id']),
                         ),
                       ],
                     ),
                   )),
-              TextButton(
-                onPressed: _addIncome,
-                child: const Text('Add Income'),
-              ),
+              // TextButton(
+              //   onPressed: _addIncome,
+              //   child: const Text('Add Income'),
+              // ),
             ],
           ),
         ],

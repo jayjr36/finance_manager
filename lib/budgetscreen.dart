@@ -1,6 +1,7 @@
+// ignore_for_file: avoid_types_as_parameter_names
+
 import 'package:finance_manager/constants.dart';
-import 'package:finance_manager/dailyinput.dart';
-import 'package:finance_manager/spendingsbydate.dart';
+import 'package:finance_manager/drawer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -18,10 +19,13 @@ class BudgetScreenState extends State<BudgetScreen> {
   Constants constants = Constants();
   double totalExpense = 0.0;
   double totalDailyExpense = 0.0;
+  List<Map<String, dynamic>> incomes = [];
+  double totalIncome = 0.0;
   @override
   void initState() {
     super.initState();
     _getTotalBudget();
+    _fetchIncomes();
     _getTotalDailySpendings();
   }
 
@@ -63,71 +67,74 @@ class BudgetScreenState extends State<BudgetScreen> {
       },
     );
   }
-Future<void> _addExpense(String categoryId) async {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController amountController = TextEditingController();
-  final TextEditingController tallyController = TextEditingController();
 
-  return showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Add Expense'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(hintText: 'Expense Name'),
+  Future<void> _addExpense(String categoryId) async {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController amountController = TextEditingController();
+    final TextEditingController tallyController = TextEditingController();
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Expense'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(hintText: 'Expense Name'),
+              ),
+              TextField(
+                controller: amountController,
+                decoration: const InputDecoration(hintText: 'Amount'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: tallyController,
+                decoration: const InputDecoration(hintText: 'Tally'),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
             ),
-            TextField(
-              controller: amountController,
-              decoration: const InputDecoration(hintText: 'Amount'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: tallyController,
-              decoration: const InputDecoration(hintText: 'Tally'),
-              keyboardType: TextInputType.number,
+            TextButton(
+              child: const Text('Add'),
+              onPressed: () {
+                double amount = double.parse(amountController.text);
+                int tally = tallyController.text.isNotEmpty
+                    ? int.parse(tallyController.text)
+                    : 1;
+                double totalAmount = amount * tally;
+
+                _firestore
+                    .collection('categories')
+                    .doc(uid)
+                    .collection('my_categories')
+                    .doc(categoryId)
+                    .collection('expenses')
+                    .add({
+                  'name': nameController.text,
+                  'amount': amount,
+                  'tally': tally,
+                  'total_amount': totalAmount,
+                  'date': DateTime.now(),
+                });
+                Navigator.of(context).pop();
+              },
             ),
           ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('Cancel'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-          TextButton(
-            child: const Text('Add'),
-            onPressed: () {
-              double amount = double.parse(amountController.text);
-              int tally = tallyController.text.isNotEmpty ? int.parse(tallyController.text) : 1;
-              double totalAmount = amount * tally;
-
-              _firestore
-                  .collection('categories')
-                  .doc(uid)
-                  .collection('my_categories')
-                  .doc(categoryId)
-                  .collection('expenses')
-                  .add({
-                'name': nameController.text,
-                'amount': amount,
-                'tally': tally,
-                'total_amount': totalAmount,
-                'date': DateTime.now(),
-              });
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Future<void> _editExpense(
       String categoryId, String expenseId, Map<String, dynamic> expense) async {
@@ -241,6 +248,24 @@ Future<void> _addExpense(String categoryId) async {
     return totalBudget;
   }
 
+  Future<void> _fetchIncomes() async {
+    QuerySnapshot snapshot = await _firestore
+        .collection('incomes')
+        .doc(uid)
+        .collection('my_incomes')
+        .get();
+    List<Map<String, dynamic>> data = snapshot.docs.map((doc) {
+      Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
+      docData['id'] = doc.id;
+      return docData;
+    }).toList();
+
+    setState(() {
+      incomes = data;
+      totalIncome = incomes.fold(0, (sum, item) => sum + item['amount']);
+    });
+  }
+
   Future<double> _getTotalDailySpendings() async {
     double totalSpendings = 0.0;
     QuerySnapshot dailySpendingsSnapshot = await _firestore
@@ -263,6 +288,7 @@ Future<void> _addExpense(String categoryId) async {
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
     return Scaffold(
+      drawer: const CustomDrawer(),
       appBar: AppBar(
         toolbarHeight: h * 0.15,
         backgroundColor: constants.primaryColor,
@@ -270,21 +296,25 @@ Future<void> _addExpense(String categoryId) async {
           title: Center(child: Image.asset('assets/image1.png')),
           subtitle: Center(child: Image.asset('assets/image2.png')),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _addCategory,
-          ),
-        ],
       ),
       body: Column(
         children: [
           Center(
               child: Text(
             "Set Your budget by creating categories",
-            style: constants.headerText,
+            style: constants.boldFont,
           )),
-         
+          Center(
+            child: OutlinedButton(
+                onPressed: () {
+                  _addCategory();
+                },
+          
+                child: const Text(
+                  'New Category',
+                  style: TextStyle(color: Colors.green),
+                )),
+          ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _firestore
@@ -306,7 +336,6 @@ Future<void> _addExpense(String categoryId) async {
 
                     return ExpansionTile(
                       title: Container(
-                          // padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                               borderRadius: const BorderRadius.only(
                                   topRight: Radius.circular(20),
@@ -360,7 +389,7 @@ Future<void> _addExpense(String categoryId) async {
                                         style: constants.normalFont,
                                       ),
                                       SizedBox(
-                                        width: w * 0.3,
+                                        width: w * 0.2,
                                       ),
                                       Text(
                                         '${expenseData['total_amount']}',
@@ -372,9 +401,9 @@ Future<void> _addExpense(String categoryId) async {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
+                                         color: Colors.amber,
                                         icon: const Icon(
                                           Icons.edit,
-                                          size: 15,
                                         ),
                                         onPressed: () => _editExpense(
                                             category.id,
@@ -382,6 +411,7 @@ Future<void> _addExpense(String categoryId) async {
                                             expenseData),
                                       ),
                                       IconButton(
+                                         color: Colors.red,
                                         icon: const Icon(
                                           Icons.delete,
                                           size: 15,
@@ -403,24 +433,112 @@ Future<void> _addExpense(String categoryId) async {
               },
             ),
           ),
-          const Center(child: Text('SUMMARY')),
-          Wrap(
-            children: [
-              const Text('Estimated Budget: '),
-              Text('$totalExpense')
-            ],
+          const Center(
+              child: Text(
+            'SUMMARY',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          )),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.2),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                const Text('Total Income:     ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    )),
+                Text('$totalIncome',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Color.fromARGB(255, 7, 78, 141)))
+              ],
+            ),
           ),
-          Wrap(
-            children: [const Text('Amount Spent: '), Text('$totalDailyExpense')],
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.2),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Estimated Budget:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      )),
+                ),
+                Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '$totalExpense',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Color.fromARGB(255, 7, 78, 141)),
+                    ))
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.2),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Amount Spent:       ',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Colors.black)),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text('$totalDailyExpense',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Colors.red)),
+                )
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.2),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Balance:              ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      )),
+                ),
+                Align(
+                    alignment: Alignment.centerRight,
+                    child: Text('${totalIncome - totalDailyExpense}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.green)))
+              ],
+            ),
           )
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-          tooltip: 'Create category',
-          child: const Icon(Icons.add),
-          onPressed: () {
-            _addCategory;
-          }),
+      // floatingActionButton: FloatingActionButton(
+      //     tooltip: 'Create category',
+      //     child: const Icon(Icons.add),
+      //     onPressed: () {
+      //       _addCategory;
+      //     }),
     );
   }
 }

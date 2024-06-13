@@ -1,7 +1,9 @@
+// ignore_for_file: avoid_types_as_parameter_names, use_build_context_synchronously
+
 import 'package:finance_manager/budgetscreen.dart';
 import 'package:finance_manager/dailyinput.dart';
-import 'package:finance_manager/goals.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finance_manager/spendingsbydate.dart';
@@ -47,10 +49,16 @@ class ExpenseScreenState extends State<ExpenseScreen> {
       });
 
       // Debug prints to verify data
-      print('Daily Expenses: $dailyExpenses');
-      print('Weekly Expenses: $weeklyExpenses');
+      if (kDebugMode) {
+        print('Daily Expenses: $dailyExpenses');
+      }
+      if (kDebugMode) {
+        print('Weekly Expenses: $weeklyExpenses');
+      }
     } catch (e) {
-      print('Error fetching expenses: $e');
+      if (kDebugMode) {
+        print('Error fetching expenses: $e');
+      }
     }
   }
 
@@ -89,7 +97,9 @@ class ExpenseScreenState extends State<ExpenseScreen> {
                 Navigator.of(context).pop();
                 _fetchExpenses();
               } catch (e) {
-                print('Error adding expense: $e');
+                if (kDebugMode) {
+                  print('Error adding expense: $e');
+                }
               }
             },
             child: const Text('Add'),

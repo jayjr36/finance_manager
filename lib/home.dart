@@ -1,8 +1,6 @@
 import 'package:finance_manager/budgetscreen.dart';
 import 'package:finance_manager/constants.dart';
-import 'package:finance_manager/dailyinput.dart';
 import 'package:finance_manager/dailyanalysis.dart';
-import 'package:finance_manager/expense.dart';
 import 'package:finance_manager/goals.dart';
 import 'package:finance_manager/incomes.dart';
 import 'package:flutter/material.dart';

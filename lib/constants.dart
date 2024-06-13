@@ -5,5 +5,5 @@ class Constants {
   final secondColor = const Color.fromARGB(255, 195, 177, 8);
   final normalFont = const TextStyle(fontSize: 14);
   final boldFont = const TextStyle(fontSize: 14, fontWeight: FontWeight.bold);
-  final headerText = const TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
+  final headerText = const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white);
 }

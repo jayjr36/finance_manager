@@ -1,14 +1,10 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, avoid_types_as_parameter_names
 
-import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finance_manager/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 
 class Goal {
   String id;
@@ -254,12 +250,11 @@ class GoalsScreenState extends State<GoalsScreen> {
   final constants = Constants();
   @override
   Widget build(BuildContext context) {
-    double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: constants.primaryColor,
-        title: const Text('GOALS'),
+        title: Text('GOALS', style: constants.headerText,),
         actions: [
           TextButton(
               onPressed: () {
@@ -272,143 +267,146 @@ class GoalsScreenState extends State<GoalsScreen> {
         children: [
           Center(
             child: Text('Total percentage Assigned - $totalPercentage'),),
-          ListView.builder(
-            itemCount: _goals.length,
-            itemBuilder: (context, index) {
-              final goal = _goals[index];
-              return Card(
-                margin: const EdgeInsets.all(15),
-                elevation: 5,
-                shadowColor: const Color.fromARGB(255, 104, 94, 5),
-                child: ListTile(
-                  title: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'GOAL',
-                            style: constants.boldFont,
-                          ),
-                          SizedBox(
-                            width: w * 0.4,
-                          ),
-                          Text(
-                            goal.name,
-                            style: constants.normalFont,
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'GOAL AMOUNT',
-                            style: constants.boldFont,
-                          ),
-                          SizedBox(
-                            width: w * 0.23,
-                          ),
-                          Text(
-                            '${goal.requiredAmount}',
-                            style: constants.normalFont,
-                          )
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AMOUNT PAID',
-                            style: constants.boldFont,
-                          ),
-                          SizedBox(
-                            width: w * 0.25,
-                          ),
-                          Text(
-                            '${goal.allocatedAmount}',
-                            style: constants.normalFont,
-                          )
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AMOUNT REMAINING',
-                            style: constants.boldFont,
-                          ),
-                          SizedBox(
-                            width: w * 0.13,
-                          ),
-                          Text(
-                            'remainder',
-                            style: constants.normalFont,
-                          )
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'TIME SPAN',
-                            style: constants.boldFont,
-                          ),
-                          SizedBox(
-                            width: w * 0.3,
-                          ),
-                          Text(
-                            'TO AND FROM',
-                            style: constants.normalFont,
-                          )
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'PERCENTAGE',
-                            style: constants.boldFont,
-                          ),
-                          SizedBox(
-                            width: w * 0.25,
-                          ),
-                          Text(
-                            '${goal.percentage}',
-                            style: constants.normalFont,
-                          )
-                        ],
-                      )
-                    ],
-                  ),
-                  subtitle: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextButton(
-                        child: const Text(
-                          'EDIT',
-                          style:
-                              TextStyle(color: Color.fromARGB(255, 161, 147, 19)),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _goals.length,
+              itemBuilder: (context, index) {
+                final goal = _goals[index];
+                return Card(
+                  margin: const EdgeInsets.all(15),
+                  elevation: 5,
+                  shadowColor: const Color.fromARGB(255, 104, 94, 5),
+                  child: ListTile(
+                    title: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              'GOAL',
+                              style: constants.boldFont,
+                            ),
+                            SizedBox(
+                              width: w * 0.4,
+                            ),
+                            Text(
+                              goal.name,
+                              style: constants.normalFont,
+                            ),
+                          ],
                         ),
-                        onPressed: () => _editGoal(goal),
-                      ),
-                      TextButton(
-                        child: const Text(
-                          'DELETE',
-                          style: TextStyle(color: Colors.red),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              'GOAL AMOUNT',
+                              style: constants.boldFont,
+                            ),
+                            SizedBox(
+                              width: w * 0.23,
+                            ),
+                            Text(
+                              '${goal.requiredAmount}',
+                              style: constants.normalFont,
+                            )
+                          ],
                         ),
-                        onPressed: () => _deleteGoal(goal.id),
-                      ),
-                    ],
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AMOUNT PAID',
+                              style: constants.boldFont,
+                            ),
+                            SizedBox(
+                              width: w * 0.25,
+                            ),
+                            Text(
+                              '${goal.allocatedAmount}',
+                              style: constants.normalFont,
+                            )
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AMOUNT REMAINING',
+                              style: constants.boldFont,
+                            ),
+                            SizedBox(
+                              width: w * 0.13,
+                            ),
+                            Text(
+                              '${goal.requiredAmount - goal.allocatedAmount}',
+                              style: constants.normalFont,
+                            )
+                          ],
+                        ),
+                        // Row(
+                        //   mainAxisAlignment: MainAxisAlignment.start,
+                        //   children: [
+                        //     Text(
+                        //       'TIME SPAN',
+                        //       style: constants.boldFont,
+                        //     ),
+                        //     SizedBox(
+                        //       width: w * 0.3,
+                        //     ),
+                        //     Text(
+                        //       'TO AND FROM',
+                        //       style: constants.normalFont,
+                        //     )
+                        //   ],
+                        // ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              'PERCENTAGE',
+                              style: constants.boldFont,
+                            ),
+                            SizedBox(
+                              width: w * 0.25,
+                            ),
+                            Text(
+                              '${goal.percentage}',
+                              style: constants.normalFont,
+                            )
+                          ],
+                        )
+                      ],
+                    ),
+                    subtitle: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton(
+                          child: const Text(
+                            'EDIT',
+                            style:
+                                TextStyle(color: Color.fromARGB(255, 161, 147, 19)),
+                          ),
+                          onPressed: () => _editGoal(goal),
+                        ),
+                        TextButton(
+                          child: const Text(
+                            'DELETE',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                          onPressed: () => _deleteGoal(goal.id),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.amber,
         child: const Icon(Icons.add),
         onPressed: () {
           _showGoalDialog();

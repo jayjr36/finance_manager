@@ -1,8 +1,5 @@
-import 'package:finance_manager/expense.dart';
-import 'package:finance_manager/home.dart';
 import 'package:finance_manager/login.dart';
 import 'package:finance_manager/pinverification.dart';
-import 'package:finance_manager/register.dart';
 import 'package:finance_manager/splash.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';

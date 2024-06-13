@@ -19,8 +19,6 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
   double totalSaved = 0.0;
   double totalPredefinedBudget = 0.0;
 
-  TextEditingController _nameController = TextEditingController();
-  TextEditingController _amountController = TextEditingController();
 
   @override
   void initState() {
@@ -66,52 +64,6 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
     });
   }
 
-  // Future<void> _addDailySpending() async {
-  //   String name = _nameController.text;
-  //   double amount = double.parse(_amountController.text);
-
-  //   // Save daily spending
-  //   await _firestore
-  //       .collection('daily_spending')
-  //       .doc(uid)
-  //       .collection('my_daily_spending')
-  //       .add({'name': name, 'amount': amount, 'timestamp': Timestamp.now()});
-
-  //   // Compare with predefined budget
-  //   QuerySnapshot budgetSnapshot = await _firestore
-  //       .collection('daily_expenses')
-  //       .doc(uid)
-  //       .collection('my_daily_expenses')
-  //       .where('name', isEqualTo: name)
-  //       .get();
-  //   if (budgetSnapshot.docs.isNotEmpty) {
-  //     double predefinedAmount = budgetSnapshot.docs.first['amount'];
-  //     double difference = predefinedAmount - amount;
-  //     String status;
-
-  //     if (difference < 0) {
-  //       status = 'Overspent';
-  //       difference = -difference;
-  //     } else {
-  //       status = 'Saved Money';
-  //     }
-
-  //     // Save analysis
-  //     await _firestore.collection('expense_analysis').doc(uid).collection('my_expense_analysis').add({
-  //       'name': name,
-  //       'amount': amount,
-  //       'status': status,
-  //       'difference': difference,
-  //       'timestamp': Timestamp.now(),
-  //     });
-
-  //     // Refresh analysis data
-  //     _fetchAnalysisData();
-  //   }
-
-  //   _nameController.clear();
-  //   _amountController.clear();
-  // }
 
   final constants = Constants();
   @override
@@ -120,7 +72,7 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
       appBar: AppBar(
         backgroundColor: constants.primaryColor,
         title: Text(
-          'Expense Analyzer',
+          'Expense Tracker',
           style: constants.headerText,
         ),
       ),
@@ -137,7 +89,7 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
                         DataColumn(label: Text('Name')),
                         DataColumn(label: Text('Amount')),
                         DataColumn(label: Text('Status')),
-                        DataColumn(label: Text('Difference')),
+                        DataColumn(label: Text('Due')),
                         DataColumn(label: Text('Date')),
                       ],
                       rows: analysisData.map((data) {
@@ -166,14 +118,14 @@ class DailyTrackerScreenState extends State<DailyTrackerScreen> {
                       }).toList(),
                     ),
                   ),
-            const SizedBox(height: 20),
-            Text('Total Amount Overspent: ${totalOverspent.toStringAsFixed(0)}',
-                style: const TextStyle(color: Colors.red)),
-            Text('Total Amount Saved: ${totalSaved.toStringAsFixed(0)}',
-                style: const TextStyle(color: Colors.green)),
-            Text(
-                'Total Predefined Daily Budget: ${totalPredefinedBudget.toStringAsFixed(0)}',
-                style: const TextStyle(color: Colors.blue)),
+            // const SizedBox(height: 20),
+            // Text('Total Amount Overspent: ${totalOverspent.toStringAsFixed(0)}',
+            //     style: const TextStyle(color: Colors.red)),
+            // Text('Total Amount Saved: ${totalSaved.toStringAsFixed(0)}',
+            //     style: const TextStyle(color: Colors.green)),
+            // Text(
+            //     'Total Predefined Daily Budget: ${totalPredefinedBudget.toStringAsFixed(0)}',
+            //     style: const TextStyle(color: Colors.blue)),
           ],
         ),
       ),
