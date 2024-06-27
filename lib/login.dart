@@ -51,12 +51,12 @@ class LoginScreenState extends State<LoginScreen> {
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
     return Scaffold(
-      body: SingleChildScrollView(
-        child: LoadingOverlay(
-          isLoading: isloading,
-          progressIndicator: const CircularProgressIndicator(
-            color: Colors.amber,
-          ),
+      body: LoadingOverlay(
+        isLoading: isloading,
+        progressIndicator: const CircularProgressIndicator(
+          color: Colors.amber,
+        ),
+        child: SingleChildScrollView(
           child: Column(
             children: [
               SizedBox(

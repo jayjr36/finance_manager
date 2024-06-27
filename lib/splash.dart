@@ -12,22 +12,24 @@ class SplashPage extends StatefulWidget {
 class SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
+    double h = MediaQuery.of(context).size.height;
     return EasySplashScreen(
-      logo: Image.asset('assets/image1.png'),
-      title: const Text(
-        "Hakikisha Maendeleo Ya Kasi",
-        style: TextStyle(
-          fontSize: 12,
-          color: Colors.black,
-          letterSpacing: 3,
-          fontWeight: FontWeight.normal,
-        ),
-      ),
+      logo: Image.asset('assets/image1.png',),
+      //title: const Text(
+        //"Hakikisha Maendeleo Ya Kasi",
+        // style: TextStyle(
+        //   fontSize: 12,
+        //   color: Colors.black,
+        //   letterSpacing: 3,
+        //   fontWeight: FontWeight.normal,
+        // ),
+      //),
       backgroundColor: Colors.amber,
       showLoader: true,
       loadingText: const Text("Welcome"),
       navigator: const AuthenticationWrapper(),
       durationInSeconds: 5,
+      logoWidth: h*0.2,
     );
   }
 }
