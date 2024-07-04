@@ -3,6 +3,7 @@
 import 'package:finance_manager/constants.dart';
 import 'package:finance_manager/drawer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -21,12 +22,17 @@ class BudgetScreenState extends State<BudgetScreen> {
   double totalDailyExpense = 0.0;
   List<Map<String, dynamic>> incomes = [];
   double totalIncome = 0.0;
+  bool isloading = false;
+  List<String> categories = [];
+  String? selectedCategory;
+
   @override
   void initState() {
     super.initState();
     _getTotalBudget();
     _fetchIncomes();
     _getTotalDailySpendings();
+    getname();
   }
 
   Future<void> _addCategory() async {
@@ -220,6 +226,9 @@ class BudgetScreenState extends State<BudgetScreen> {
   }
 
   Future<double> _getTotalBudget() async {
+    setState(() {
+      isloading = true;
+    });
     double totalBudget = 0.0;
 
     QuerySnapshot categorySnapshot = await _firestore
@@ -243,12 +252,18 @@ class BudgetScreenState extends State<BudgetScreen> {
     }
     setState(() {
       totalExpense = totalBudget;
+      isloading = false;
     });
-
+    setState(() {
+      isloading = false;
+    });
     return totalBudget;
   }
 
   Future<void> _fetchIncomes() async {
+    setState(() {
+      isloading = true;
+    });
     QuerySnapshot snapshot = await _firestore
         .collection('incomes')
         .doc(uid)
@@ -263,10 +278,17 @@ class BudgetScreenState extends State<BudgetScreen> {
     setState(() {
       incomes = data;
       totalIncome = incomes.fold(0, (sum, item) => sum + item['amount']);
+      isloading = false;
+    });
+    setState(() {
+      isloading = false;
     });
   }
 
   Future<double> _getTotalDailySpendings() async {
+    setState(() {
+      isloading = true;
+    });
     double totalSpendings = 0.0;
     QuerySnapshot dailySpendingsSnapshot = await _firestore
         .collection('daily_spending')
@@ -279,8 +301,115 @@ class BudgetScreenState extends State<BudgetScreen> {
     }
     setState(() {
       totalDailyExpense = totalSpendings;
+      isloading = false;
     });
     return totalSpendings;
+  }
+
+  User? user = FirebaseAuth.instance.currentUser;
+  String? name;
+  String? email;
+  Future<void> getname() async {
+    setState(() {
+      isloading = true;
+    });
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
+      name = userDoc['username'] ?? 'Failed to get name';
+      setState(() {
+        isloading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isloading = false;
+      });
+      if (kDebugMode) {
+        print(e);
+      }
+    }
+  }
+
+  void fetchCategories() async {
+    final QuerySnapshot snapshot = await _firestore
+        .collection('categories')
+        .doc(uid)
+        .collection('my_categories')
+        .get();
+
+    setState(() {
+      categories = snapshot.docs.map((doc) => doc['name'].toString()).toList();
+    });
+  }
+
+  void deleteCategory() async {
+    if (selectedCategory == null) return;
+
+    final QuerySnapshot snapshot = await _firestore
+        .collection('categories')
+        .doc(uid)
+        .collection('my_categories')
+        .where('name', isEqualTo: selectedCategory)
+        .get();
+
+    for (var doc in snapshot.docs) {
+      await _firestore
+          .collection('categories')
+          .doc(uid)
+          .collection('my_categories')
+          .doc(doc.id)
+          .delete();
+    }
+
+    fetchCategories(); 
+    setState(() {
+      selectedCategory = null; 
+    });
+  }
+
+    void showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Category'),
+          content: DropdownButton<String>(
+            hint: const Text('Select Category to Delete'),
+            value: selectedCategory,
+            onChanged: (String? newValue) {
+              setState(() {
+                selectedCategory = newValue;
+              });
+              Navigator.of(context).pop();
+              showDeleteDialog(context);
+            },
+            items: categories.map((String category) {
+              return DropdownMenuItem<String>(
+                value: category,
+                child: Text(category),
+              );
+            }).toList(),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Delete'),
+              onPressed: () {
+                deleteCategory();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -288,7 +417,9 @@ class BudgetScreenState extends State<BudgetScreen> {
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
     return Scaffold(
-      drawer: const CustomDrawer(),
+      drawer: CustomDrawer(
+        name: name ?? 'username',
+      ),
       appBar: AppBar(
         toolbarHeight: h * 0.15,
         backgroundColor: constants.primaryColor,
@@ -304,17 +435,31 @@ class BudgetScreenState extends State<BudgetScreen> {
             "Set Your budget by creating categories",
             style: constants.boldFont,
           )),
-          Center(
-            child: OutlinedButton(
-                onPressed: () {
-                  _addCategory();
-                },
+         
+             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                OutlinedButton(
+                    onPressed: () {
+                      _addCategory();
+                    },
+                    child: const Text(
+                      'New Category',
+                      style: TextStyle(color: Colors.green),
+                    )),
+                       OutlinedButton(
+                    onPressed: () {
+                      showDeleteDialog(context);
+                    },
+                    child: const Text(
+                      'Delete Category',
+                      style: TextStyle(color: Colors.red),
+                    )),
+                    
+              ],
+            ),
           
-                child: const Text(
-                  'New Category',
-                  style: TextStyle(color: Colors.green),
-                )),
-          ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _firestore
@@ -401,7 +546,7 @@ class BudgetScreenState extends State<BudgetScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
-                                         color: Colors.amber,
+                                        color: Colors.amber,
                                         icon: const Icon(
                                           Icons.edit,
                                         ),
@@ -411,7 +556,7 @@ class BudgetScreenState extends State<BudgetScreen> {
                                             expenseData),
                                       ),
                                       IconButton(
-                                         color: Colors.red,
+                                        color: Colors.red,
                                         icon: const Icon(
                                           Icons.delete,
                                           size: 15,

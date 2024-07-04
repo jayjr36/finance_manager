@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:finance_manager/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_overlay/loading_overlay.dart';
 
 class DailyExpenseScreen extends StatefulWidget {
   const DailyExpenseScreen({super.key});
@@ -20,6 +21,7 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
   String? _selectedExpense;
   bool _isCustomCategory = false;
   final _customCategoryController = TextEditingController();
+  bool isloading = true;
 
   @override
   Widget build(BuildContext context) {
@@ -33,150 +35,156 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
         backgroundColor:
             Constants().primaryColor, // Amber as the primary color for app bar
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            StreamBuilder<QuerySnapshot>(
-              stream: _firestore
-                  .collection('categories')
-                  .doc(uid)
-                  .collection('my_categories')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const CircularProgressIndicator();
-                }
-                var categories = snapshot.data!.docs;
-
-                // Ensure the selected category is valid
-                if (_selectedCategory != null &&
-                    !categories
-                        .any((category) => category.id == _selectedCategory)) {
-                  _selectedCategory = null;
-                }
-
-                // Add the "Other" option manually
-                var categoryItems = categories.map((category) {
-                  return DropdownMenuItem<String>(
-                    value: category.id,
-                    child: Text(category['name']),
-                  );
-                }).toList();
-                categoryItems.add(
-                  const DropdownMenuItem<String>(
-                    value: 'Other',
-                    child: Text('Other'),
-                  ),
-                );
-
-                return DropdownButton<String>(
-                  value: _selectedCategory,
-                  hint: const Text('Select category'),
-                  items: categoryItems,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCategory = value;
-                      _isCustomCategory = value == 'Other';
-                      _selectedExpense =
-                          null; // Reset selected expense when category changes
-                    });
-                  },
-                  style: const TextStyle(
-                      color: Colors.black), // Amber text color for dropdown
-                  dropdownColor: Colors
-                      .white, // Amber accent color for dropdown background
-                );
-              },
-            ),
-            if (_selectedCategory != null && !_isCustomCategory)
+      body: LoadingOverlay(
+        isLoading: isloading,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
               StreamBuilder<QuerySnapshot>(
                 stream: _firestore
                     .collection('categories')
                     .doc(uid)
                     .collection('my_categories')
-                    .doc(_selectedCategory)
-                    .collection('expenses')
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const CircularProgressIndicator();
                   }
-                  var expenses = snapshot.data!.docs;
+                  var categories = snapshot.data!.docs;
 
-                  // Ensure the selected expense is valid
-                  if (_selectedExpense != null &&
-                      !expenses.any(
-                          (expense) => expense['name'] == _selectedExpense)) {
-                    _selectedExpense = null;
+                  // Ensure the selected category is valid
+                  if (_selectedCategory != null &&
+                      !categories.any(
+                          (category) => category.id == _selectedCategory)) {
+                    _selectedCategory = null;
                   }
 
+                  // Add the "Other" option manually
+                  var categoryItems = categories.map((category) {
+                    return DropdownMenuItem<String>(
+                      value: category.id,
+                      child: Text(category['name']),
+                    );
+                  }).toList();
+                  categoryItems.add(
+                    const DropdownMenuItem<String>(
+                      value: 'Other',
+                      child: Text('Other'),
+                    ),
+                  );
+
                   return DropdownButton<String>(
-                    value: _selectedExpense,
-                    hint: const Text('Select expense'),
-                    items: expenses.map((expense) {
-                      return DropdownMenuItem<String>(
-                        value: expense['name'],
-                        child: Text(expense['name']),
-                      );
-                    }).toList(),
+                    value: _selectedCategory,
+                    hint: const Text('Select category'),
+                    items: categoryItems,
                     onChanged: (value) {
                       setState(() {
-                        _selectedExpense = value;
+                        _selectedCategory = value;
+                        _isCustomCategory = value == 'Other';
+                        _selectedExpense =
+                            null; // Reset selected expense when category changes
                       });
                     },
                     style: const TextStyle(
                         color: Colors.black), // Amber text color for dropdown
+                    dropdownColor: Colors
+                        .white, // Amber accent color for dropdown background
                   );
                 },
               ),
-            if (_isCustomCategory)
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: w*0.2),
-                child: TextField(
-                  controller: _customCategoryController,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter expense',
-                    hintStyle:
-                        TextStyle(color: Colors.black), // Amber hint text color
+              if (_selectedCategory != null && !_isCustomCategory)
+                StreamBuilder<QuerySnapshot>(
+                  stream: _firestore
+                      .collection('categories')
+                      .doc(uid)
+                      .collection('my_categories')
+                      .doc(_selectedCategory)
+                      .collection('expenses')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const CircularProgressIndicator();
+                    }
+                    var expenses = snapshot.data!.docs;
+
+                    // Ensure the selected expense is valid
+                    if (_selectedExpense != null &&
+                        !expenses.any(
+                            (expense) => expense['name'] == _selectedExpense)) {
+                      _selectedExpense = null;
+                    }
+
+                    return DropdownButton<String>(
+                      value: _selectedExpense,
+                      hint: const Text('Select expense'),
+                      items: expenses.map((expense) {
+                        return DropdownMenuItem<String>(
+                          value: expense['name'],
+                          child: Text(expense['name']),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedExpense = value;
+                        });
+                      },
+                      style: const TextStyle(
+                          color: Colors.black), // Amber text color for dropdown
+                    );
+                  },
+                ),
+              if (_isCustomCategory)
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: w * 0.2),
+                  child: TextField(
+                    controller: _customCategoryController,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter expense',
+                      hintStyle: TextStyle(
+                          color: Colors.black), // Amber hint text color
+                    ),
+                    style: const TextStyle(
+                        color: Colors.black), // Amber text color for text field
                   ),
-                  style: const TextStyle(
-                      color: Colors.black), // Amber text color for text field
+                ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: w * 0.2),
+                child: TextField(
+                  controller: _amountController,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter amount',
+                    hintStyle: TextStyle(color: Colors.black),
+                  ),
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.black),
                 ),
               ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: w*0.2),
-              child: TextField(
-                controller: _amountController,
-                decoration: const InputDecoration(
-                  hintText: 'Enter amount',
-                  hintStyle: TextStyle(color: Colors.black),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  _submitSpending(_selectedCategory);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Constants().primaryColor,
+                  surfaceTintColor: Colors.black,
                 ),
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.black),
+                child: const Text(
+                  'Submit Spending',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                _submitSpending(_selectedCategory);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Constants().primaryColor,
-                surfaceTintColor: Colors.black,
-              ),
-              child: const Text(
-                'Submit Spending',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Future<void> _submitSpending(String? category) async {
+    setState(() {
+      isloading = true;
+    });
     String name = _isCustomCategory
         ? _customCategoryController.text.trim()
         : _selectedExpense ?? '';
@@ -192,6 +200,9 @@ class DailyExpenseScreenState extends State<DailyExpenseScreen> {
     });
     _analyzeSpending(name, amount, category);
     _clearForm();
+    setState(() {
+      isloading = false;
+    });
   }
 
   void _clearForm() {

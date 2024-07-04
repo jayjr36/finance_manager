@@ -9,7 +9,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class CustomDrawer extends StatefulWidget {
-  const CustomDrawer({super.key});
+  final String name;
+  const CustomDrawer({super.key, required this.name});
 
   @override
   State<CustomDrawer> createState() => _CustomDrawerState();
@@ -20,26 +21,26 @@ class _CustomDrawerState extends State<CustomDrawer> {
   Widget build(BuildContext context) {
     final double deviceHeight = MediaQuery.of(context).size.height;
     User? user = FirebaseAuth.instance.currentUser;
-    String? name;
+  //  String? name;
     String? email;
-    Future<void> getname() async {
-      try {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user!.uid)
-            .get();
-        name = userDoc['username'] ?? 'Failed to get name';
-      } catch (e) {
-        if (kDebugMode) {
-          print(e);
-        }
-      }
-    }
+    // Future<void> getname() async {
+    //   try {
+    //     DocumentSnapshot userDoc = await FirebaseFirestore.instance
+    //         .collection('users')
+    //         .doc(user!.uid)
+    //         .get();
+    //     name = userDoc['username'] ?? 'Failed to get name';
+    //   } catch (e) {
+    //     if (kDebugMode) {
+    //       print(e);
+    //     }
+    //   }
+    // }
 
     @override
     void initState() {
       super.initState();
-      getname();
+//      getname();
     }
 
     email = user!.email ?? 'Failed to get email';
@@ -58,10 +59,18 @@ class _CustomDrawerState extends State<CustomDrawer> {
             ),
           ),
           ListTile(
-            title: Center(child: Text(name ?? 'name not found', style: Constants().boldFont,)),
+            title: Center(
+                child: Text(
+              widget.name,
+              style: Constants().boldFont,
+            )),
           ),
           ListTile(
-            title: Center(child: Text(email, style: Constants().boldFont,)),
+            title: Center(
+                child: Text(
+              email,
+              style: Constants().boldFont,
+            )),
           ),
           OutlinedButton(
               onPressed: () {
